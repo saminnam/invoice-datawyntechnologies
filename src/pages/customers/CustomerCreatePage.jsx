@@ -99,13 +99,13 @@ const CustomerCreatePage = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="mx-auto">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Add New Customer</h1>
         <p className="text-gray-600">Fill in the customer details below</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="grid md:grid-cols-2 md:gap-10 grid-cols-1 gap-5">
         {/* Basic Information */}
         <div className="card">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Basic Information</h2>
@@ -373,7 +373,7 @@ const CustomerCreatePage = () => {
         </div>
 
         {/* Actions */}
-        <div className="flex justify-end gap-3">
+        <div className="flex gap-3">
           <button
             type="button"
             onClick={() => navigate('/customers')}
@@ -384,7 +384,7 @@ const CustomerCreatePage = () => {
           <button
             type="submit"
             disabled={loading}
-            className="btn btn-primary"
+            className="btn bg-black text-white"
           >
             {loading ? 'Creating...' : 'Create Customer'}
           </button>

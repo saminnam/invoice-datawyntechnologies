@@ -64,4 +64,9 @@ export const invoiceService = {
     })
     return response
   },
+
+  deleteInvoice: async (id) => {
+    const response = await api.delete(`/invoices/${id}`)
+    return response.data
+  },
 }

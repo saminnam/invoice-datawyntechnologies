@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { FiPlus, FiTrash2, FiSave, FiX } from 'react-icons/fi'
 import { invoiceService } from '../../services/invoiceService'
@@ -25,7 +25,8 @@ const ProformaCreatePage = () => {
     placeOfSupply: '',
     notes: '',
     termsAndConditions: DEFAULT_TERMS.join('\n'),
-    items: []
+    items: [],
+    enableGST: true
   })
 
   useEffect(() => {
@@ -90,7 +91,7 @@ const ProformaCreatePage = () => {
         if (product) {
           newItems[index] = {
             ...newItems[index],
-            rate: product.price,
+            rate: Number(product.price) || 0,
             gstRate: 0 // Default to 0 since we removed gstRate from product model
           }
         }
@@ -137,7 +138,7 @@ const ProformaCreatePage = () => {
     }
   }
 
-  const calculations = calculateInvoiceTotals(formData.items)
+  const calculations = useMemo(() => calculateInvoiceTotals(formData.items, 0, 'fixed', formData.enableGST), [formData.items, formData.enableGST])
 
   return (
     <div className="max-w-6xl mx-auto">
@@ -157,7 +158,21 @@ const ProformaCreatePage = () => {
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Invoice Details */}
         <div className="card">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Invoice Details</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-900">Invoice Details</h2>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600">Enable GST</span>
+              <button
+                type="button"
+                onClick={() => setFormData(prev => ({ ...prev, enableGST: !prev.enableGST }))}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${formData.enableGST ? 'bg-blue-600' : 'bg-gray-300'}`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${formData.enableGST ? 'translate-x-6' : 'translate-x-1'}`}
+                />
+              </button>
+            </div>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -240,7 +255,7 @@ const ProformaCreatePage = () => {
             <button
               type="button"
               onClick={addItem}
-              className="btn btn-primary flex items-center gap-2"
+              className="btn bg-black text-white flex items-center gap-2"
             >
               <FiPlus size={20} />
               Add Item
@@ -280,7 +295,7 @@ const ProformaCreatePage = () => {
                       <input
                         type="number"
                         value={item.quantity}
-                        onChange={(e) => updateItem(index, 'quantity', parseFloat(e.target.value) || 0)}
+                        onChange={(e) => updateItem(index, 'quantity', Number(e.target.value) || 0)}
                         min="1"
                         className="input"
                         required
@@ -294,7 +309,7 @@ const ProformaCreatePage = () => {
                       <input
                         type="number"
                         value={item.rate}
-                        onChange={(e) => updateItem(index, 'rate', parseFloat(e.target.value) || 0)}
+                        onChange={(e) => updateItem(index, 'rate', Number(e.target.value) || 0)}
                         min="0"
                         step="0.01"
                         className="input"
@@ -314,7 +329,7 @@ const ProformaCreatePage = () => {
                         max="100"
                         step="0.01"
                         className="input"
-                        disabled
+                        disabled={!formData.enableGST}
                       />
                     </div>
 
@@ -322,7 +337,7 @@ const ProformaCreatePage = () => {
                       <button
                         type="button"
                         onClick={() => removeItem(index)}
-                        className="btn btn-danger w-full"
+                        className="btn btn-danger w-max"
                       >
                         <FiTrash2 size={20} />
                       </button>
@@ -382,16 +397,8 @@ const ProformaCreatePage = () => {
                 <span className="text-gray-600">Discount</span>
                 <span className="font-medium text-red-600">-{formatCurrency(calculations.itemDiscount + calculations.invoiceDiscount)}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Taxable Amount</span>
-                <span className="font-medium">{formatCurrency(calculations.taxableAmount)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Total Tax</span>
-                <span className="font-medium">{formatCurrency(calculations.totalTax)}</span>
-              </div>
               <div className="border-t pt-2 flex justify-between text-lg font-bold">
-                <span>Grand Total</span>
+                <span>Total</span>
                 <span>{formatCurrency(calculations.finalAmount)}</span>
               </div>
             </div>
@@ -434,7 +441,7 @@ const ProformaCreatePage = () => {
           <button
             type="submit"
             disabled={loading}
-            className="btn btn-primary flex items-center gap-2"
+            className="btn bg-black text-white flex items-center gap-2"
           >
             <FiSave size={20} />
             {loading ? 'Creating...' : 'Create Invoice'}

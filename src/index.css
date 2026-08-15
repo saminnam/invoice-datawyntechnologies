@@ -96,3 +96,7 @@
     display: block !important;
   }
 }
+
+body {
+  font-family: 'Poppins', sans-serif;
+}

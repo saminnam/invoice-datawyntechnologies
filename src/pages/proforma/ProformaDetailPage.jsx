@@ -7,10 +7,13 @@ import { formatCurrency } from '../../utils/formatCurrency'
 import { amountInWords } from '../../utils/amountInWords'
 import { INVOICE_STATUS_LABELS, INVOICE_STATUS_COLORS } from '../../config/constants'
 import toast from 'react-hot-toast'
+import { useCompany } from '../../context/CompanyContext'
+import defaultLogo from '../../assets/datawyn-logo.png'
 
 const ProformaDetailPage = () => {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { companySettings } = useCompany()
   const [invoice, setInvoice] = useState(null)
   const [loading, setLoading] = useState(true)
 
@@ -148,13 +151,33 @@ const ProformaDetailPage = () => {
       <div className="card bg-white p-8 print:shadow-none print:p-4">
         {/* Company Header */}
         <div className="border-b pb-4 mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Datawyn Technologies</h1>
-          <p className="text-sm text-gray-600 mt-2">
-            123 Tech Park, Chennai, Tamil Nadu - 600001
-          </p>
-          <p className="text-sm text-gray-600">
-            GSTIN: 33AAAAA0000A1Z5 | Email: info@datawyn.com
-          </p>
+          <div className="flex items-start gap-4">
+            {companySettings?.logo && (
+              <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
+                <img
+                  src={companySettings.logo}
+                  alt="Company Logo"
+                  className="w-full h-full object-contain"
+                />
+              </div>
+            )}
+            <div className="flex-1">
+              <h1 className="text-2xl font-bold text-gray-900">
+                {companySettings?.companyName || 'Datawyn Technologies'}
+              </h1>
+              <p className="text-sm text-gray-600 mt-2">
+                {companySettings?.address?.street && `${companySettings.address.street}, `}
+                {companySettings?.address?.city && `${companySettings.address.city}, `}
+                {companySettings?.address?.state && `${companySettings.address.state} - `}
+                {companySettings?.address?.pincode || '600001'}
+              </p>
+              <p className="text-sm text-gray-600">
+                {companySettings?.gstin && `GSTIN: ${companySettings.gstin}`}
+                {companySettings?.email && ` | Email: ${companySettings.email}`}
+                {companySettings?.phone && ` | ${companySettings.phone}`}
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Invoice Title */}
@@ -287,12 +310,25 @@ const ProformaDetailPage = () => {
         )}
 
         {/* Bank Details */}
-        <div className="border-t pt-4 mt-6">
-          <h3 className="font-semibold text-gray-900 mb-2">Bank Details</h3>
-          <p className="text-sm text-gray-600">Bank: HDFC Bank</p>
-          <p className="text-sm text-gray-600">A/C No: 1234567890123456</p>
-          <p className="text-sm text-gray-600">IFSC: HDFC0001234</p>
-        </div>
+        {companySettings?.bankDetails && (
+          <div className="border-t pt-4 mt-6">
+            <h3 className="font-semibold text-gray-900 mb-2">Bank Details</h3>
+            <p className="text-sm text-gray-600">
+              Bank: {companySettings.bankDetails.bankName || 'N/A'}
+            </p>
+            <p className="text-sm text-gray-600">
+              A/C No: {companySettings.bankDetails.accountNumber || 'N/A'}
+            </p>
+            <p className="text-sm text-gray-600">
+              IFSC: {companySettings.bankDetails.ifsc || 'N/A'}
+            </p>
+            {companySettings.bankDetails.branch && (
+              <p className="text-sm text-gray-600">
+                Branch: {companySettings.bankDetails.branch}
+              </p>
+            )}
+          </div>
+        )}
 
         {/* Signature */}
         <div className="mt-12 text-right">

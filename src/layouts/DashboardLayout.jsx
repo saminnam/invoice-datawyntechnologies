@@ -70,11 +70,10 @@ const DashboardLayout = () => {
                       navigate(item.path)
                       setMobileMenuOpen(false)
                     }}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                      isActive(item.path)
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isActive(item.path)
                         ? 'bg-primary-50 text-primary-600'
                         : 'text-gray-700 hover:bg-gray-100'
-                    }`}
+                      }`}
                   >
                     <Icon size={20} />
                     <span>{item.label}</span>
@@ -95,9 +94,8 @@ const DashboardLayout = () => {
 
       {/* Desktop Sidebar */}
       <aside
-        className={`fixed left-0 top-0 h-full bg-white shadow-lg transition-all duration-300 z-40 ${
-          sidebarOpen ? 'w-64' : 'w-20'
-        } hidden lg:block`}
+        className={`fixed left-0 top-0 h-full bg-white shadow-lg transition-all duration-300 z-40 ${sidebarOpen ? 'w-64' : 'w-20'
+          } hidden lg:block`}
       >
         <div className="p-4 border-b">
           <div className="flex items-center justify-center gap-3">
@@ -123,11 +121,10 @@ const DashboardLayout = () => {
               <button
                 key={item.path}
                 onClick={() => navigate(item.path)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                  isActive(item.path)
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isActive(item.path)
                     ? 'bg-primary-50 text-primary-600'
                     : 'text-gray-700 hover:bg-gray-100'
-                }`}
+                  }`}
                 title={!sidebarOpen ? item.label : ''}
               >
                 <Icon size={20} />
@@ -137,23 +134,23 @@ const DashboardLayout = () => {
           })}
         </nav>
 
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t">
+        <div className="absolute bottom-0 bg-black left-0 right-0 px-4 py-1 border-t">
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
+            className="w-full flex items-center uppercase justify-between px-4 py-3 rounded-lg text-white hover:bg-red-50 transition-colors"
             title={!sidebarOpen ? 'Logout' : ''}
           >
-            <FiLogOut size={20} />
             {sidebarOpen && <span>Logout</span>}
+            <FiLogOut size={20} />
+
           </button>
         </div>
       </aside>
 
       {/* Main Content */}
       <main
-        className={`transition-all duration-300 ${
-          sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'
-        } pt-16 lg:pt-0`}
+        className={`transition-all duration-300 ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'
+          } pt-16 lg:pt-0`}
       >
         <div className="p-4 lg:p-8">
           <Breadcrumbs />

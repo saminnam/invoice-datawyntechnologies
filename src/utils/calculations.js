@@ -4,12 +4,18 @@
 export function calculateItem(item) {
   const { quantity = 0, rate = 0, discount = 0, discountType = 'fixed', gstRate = 0 } = item
   
-  const subtotal = quantity * rate
+  // Ensure numeric values
+  const qty = Number(quantity) || 0
+  const rt = Number(rate) || 0
+  const disc = Number(discount) || 0
+  const gst = Number(gstRate) || 0
+  
+  const subtotal = qty * rt
   const discountAmount = discountType === 'percentage' 
-    ? (subtotal * discount) / 100 
-    : discount
+    ? (subtotal * disc) / 100 
+    : disc
   const taxableAmount = Math.max(0, subtotal - discountAmount)
-  const taxAmount = (taxableAmount * gstRate) / 100
+  const taxAmount = (taxableAmount * gst) / 100
   const total = taxableAmount + taxAmount
   
   return {
@@ -21,19 +27,37 @@ export function calculateItem(item) {
   }
 }
 
-export function calculateInvoiceTotals(items, invoiceDiscount = 0, invoiceDiscountType = 'fixed') {
+export function calculateInvoiceTotals(items, invoiceDiscount = 0, invoiceDiscountType = 'fixed', enableGST = true) {
+  if (!items || items.length === 0) {
+    return {
+      items: [],
+      subtotal: 0,
+      itemDiscount: 0,
+      invoiceDiscount: 0,
+      taxableAmount: 0,
+      totalTax: 0,
+      roundOff: 0,
+      grandTotal: 0,
+      finalAmount: 0
+    }
+  }
+  
   const calculatedItems = items.map(item => {
-    const itemCalc = calculateItem(item)
+    // If GST is disabled, set gstRate to 0 for calculation
+    const itemWithGST = enableGST ? item : { ...item, gstRate: 0 }
+    const itemCalc = calculateItem(itemWithGST)
     return {
       ...item,
+      subtotal: itemCalc.subtotal,
+      discountAmount: itemCalc.discountAmount,
       taxableAmount: itemCalc.taxableAmount,
       taxAmount: itemCalc.taxAmount,
       total: itemCalc.total
     }
   })
   
-  const subtotal = calculatedItems.reduce((sum, item) => sum + item.subtotal, 0)
-  const itemDiscount = calculatedItems.reduce((sum, item) => sum + item.discountAmount, 0)
+  const subtotal = calculatedItems.reduce((sum, item) => sum + (item.subtotal || 0), 0)
+  const itemDiscount = calculatedItems.reduce((sum, item) => sum + (item.discountAmount || 0), 0)
   
   const invoiceDiscountAmount = invoiceDiscountType === 'percentage'
     ? (subtotal * invoiceDiscount) / 100
@@ -42,7 +66,15 @@ export function calculateInvoiceTotals(items, invoiceDiscount = 0, invoiceDiscou
   const totalDiscount = itemDiscount + invoiceDiscountAmount
   const taxableAmount = Math.max(0, subtotal - totalDiscount)
   
-  const totalTax = calculatedItems.reduce((sum, item) => sum + item.taxAmount, 0)
+  // Recalculate tax based on the discounted taxable amount
+  // Get the average GST rate from all items
+  const totalTaxableAmount = calculatedItems.reduce((sum, item) => sum + item.taxableAmount, 0)
+  const totalItemTax = calculatedItems.reduce((sum, item) => sum + item.taxAmount, 0)
+  
+  // Calculate the tax proportionally based on the discount
+  const taxRatio = totalTaxableAmount > 0 ? taxableAmount / totalTaxableAmount : 0
+  const totalTax = totalItemTax * taxRatio
+  
   const grandTotal = taxableAmount + totalTax
   const roundOff = Math.round(grandTotal) - grandTotal
   const finalAmount = Math.round(grandTotal)

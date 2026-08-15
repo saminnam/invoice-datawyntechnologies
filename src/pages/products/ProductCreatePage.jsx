@@ -62,7 +62,7 @@ const ProductCreatePage = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="mx-auto">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Add New Product/Service</h1>
         <p className="text-gray-600">Fill in the product details below</p>
@@ -164,7 +164,7 @@ const ProductCreatePage = () => {
           <button
             type="submit"
             disabled={loading}
-            className="btn btn-primary"
+            className="btn bg-black text-white"
           >
             {loading ? 'Creating...' : 'Create Product'}
           </button>

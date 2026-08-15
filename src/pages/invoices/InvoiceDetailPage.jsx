@@ -102,7 +102,7 @@ const InvoiceDetailPage = () => {
       {/* Invoice Preview */}
       <div className="bg-white rounded-xl shadow-lg overflow-hidden print:shadow-none print:rounded-none">
         {/* Invoice Header */}
-        <div className="bg-gradient-to-r from-primary-600 to-primary-700 px-8 py-6 print:from-white print:to-white print:bg-white print:border-b">
+        <div className="bg-gray-50 px-8 py-6 print:from-white print:to-white print:bg-white print:border-b">
           <div className="flex items-start justify-between">
             <div className="flex items-start gap-4">
               <div className="w-16 h-16 bg-white rounded-lg p-2 shadow-sm print:shadow-none">
@@ -112,7 +112,7 @@ const InvoiceDetailPage = () => {
                   className="w-full h-full object-contain"
                 />
               </div>
-              <div className="flex-1 text-white print:text-gray-900">
+              <div className="flex-1 print:text-gray-900">
                 <h1 className="text-2xl font-bold">
                   {companySettings?.companyName || 'Datawyn Technologies'}
                 </h1>
@@ -124,7 +124,7 @@ const InvoiceDetailPage = () => {
                 </p>
               </div>
             </div>
-            <div className="text-right text-white print:text-gray-900">
+            <div className="text-right print:text-gray-900">
               <h2 className="text-3xl font-bold tracking-wide">TAX INVOICE</h2>
               <p className="text-sm opacity-90 mt-1">
                 {companySettings?.gstin && `GSTIN: ${companySettings.gstin}`}

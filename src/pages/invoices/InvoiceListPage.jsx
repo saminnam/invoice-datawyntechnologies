@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { FiEye, FiDownload } from 'react-icons/fi'
+import { FiEye, FiDownload, FiTrash2 } from 'react-icons/fi'
 import { invoiceService } from '../../services/invoiceService'
 import toast from 'react-hot-toast'
 import { formatDate } from '../../utils/dateUtils'
@@ -10,6 +10,7 @@ const InvoiceListPage = () => {
   const navigate = useNavigate()
   const [invoices, setInvoices] = useState([])
   const [loading, setLoading] = useState(true)
+  const [showDeleteModal, setShowDeleteModal] = useState(null)
 
   useEffect(() => {
     fetchInvoices()
@@ -42,6 +43,20 @@ const InvoiceListPage = () => {
       toast.success('PDF downloaded successfully')
     } catch (error) {
       toast.error('Failed to download PDF')
+    }
+  }
+
+  const handleDelete = async (id) => {
+    try {
+      const response = await invoiceService.deleteInvoice(id)
+      if (response.success) {
+        toast.success('Invoice deleted successfully')
+        fetchInvoices()
+      }
+    } catch (error) {
+      toast.error('Failed to delete invoice')
+    } finally {
+      setShowDeleteModal(null)
     }
   }
 
@@ -102,6 +117,13 @@ const InvoiceListPage = () => {
                       >
                         <FiDownload size={18} />
                       </button>
+                      <button
+                        onClick={() => setShowDeleteModal(invoice._id)}
+                        className="p-2 hover:bg-red-100 rounded-lg text-red-600"
+                        title="Delete"
+                      >
+                        <FiTrash2 size={18} />
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -116,6 +138,32 @@ const InvoiceListPage = () => {
           </tbody>
         </table>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Delete Invoice</h3>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to delete this invoice? This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowDeleteModal(null)}
+                className="btn btn-secondary"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDelete(showDeleteModal)}
+                className="btn btn-danger"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
