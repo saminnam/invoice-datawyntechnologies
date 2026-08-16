@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { FiArrowLeft, FiDownload, FiPrinter } from 'react-icons/fi'
+import { FiArrowLeft, FiDownload, FiPrinter, FiLoader } from 'react-icons/fi'
 import { invoiceService } from '../../services/invoiceService'
 import { formatDate } from '../../utils/dateUtils'
 import { formatCurrency } from '../../utils/formatCurrency'
@@ -8,6 +8,7 @@ import { amountInWords } from '../../utils/amountInWords'
 import toast from 'react-hot-toast'
 import { useCompany } from '../../context/CompanyContext'
 import defaultLogo from '../../assets/datawyn-logo.png'
+import html2pdf from 'html2pdf.js'
 
 const InvoiceDetailPage = () => {
   const { id } = useParams()
@@ -15,6 +16,8 @@ const InvoiceDetailPage = () => {
   const { companySettings } = useCompany()
   const [invoice, setInvoice] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [generatingPDF, setGeneratingPDF] = useState(false)
+  const invoiceRef = useRef(null)
 
   useEffect(() => {
     fetchInvoice()
@@ -35,18 +38,36 @@ const InvoiceDetailPage = () => {
   }
 
   const handleDownloadPDF = async () => {
+    if (!invoiceRef.current) return
+    
+    setGeneratingPDF(true)
     try {
-      const response = await invoiceService.downloadInvoicePDF(id)
-      const url = window.URL.createObjectURL(new Blob([response.data]))
-      const link = document.createElement('a')
-      link.href = url
-      link.setAttribute('download', `${invoice.invoiceNumber}.pdf`)
-      document.body.appendChild(link)
-      link.click()
-      link.remove()
+      const element = invoiceRef.current
+      const opt = {
+        margin: [10, 10, 10, 10],
+        filename: `${invoice.invoiceNumber}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { 
+          scale: 2,
+          useCORS: true,
+          letterRendering: true,
+          logging: false
+        },
+        jsPDF: { 
+          unit: 'mm', 
+          format: 'a4', 
+          orientation: 'portrait' 
+        },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+      }
+      
+      await html2pdf().set(opt).from(element).save()
       toast.success('PDF downloaded successfully')
     } catch (error) {
-      toast.error('Failed to download PDF')
+      console.error('PDF generation error:', error)
+      toast.error('Failed to generate PDF')
+    } finally {
+      setGeneratingPDF(false)
     }
   }
 
@@ -84,10 +105,20 @@ const InvoiceDetailPage = () => {
         <div className="flex gap-2">
           <button
             onClick={handleDownloadPDF}
-            className="btn btn-secondary flex items-center gap-2"
+            disabled={generatingPDF}
+            className="btn btn-primary flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <FiDownload size={20} />
-            Download PDF
+            {generatingPDF ? (
+              <>
+                <FiLoader size={20} className="animate-spin" />
+                Generating...
+              </>
+            ) : (
+              <>
+                <FiDownload size={20} />
+                Download PDF
+              </>
+            )}
           </button>
           <button
             onClick={handlePrint}
@@ -100,7 +131,7 @@ const InvoiceDetailPage = () => {
       </div>
 
       {/* Invoice Preview */}
-      <div className="bg-white rounded-xl shadow-lg overflow-hidden print:shadow-none print:rounded-none">
+      <div ref={invoiceRef} className="bg-white rounded-xl shadow-lg overflow-hidden print:shadow-none print:rounded-none">
         {/* Invoice Header */}
         <div className="bg-gray-50 px-8 py-6 print:from-white print:to-white print:bg-white print:border-b">
           <div className="flex items-start justify-between">
