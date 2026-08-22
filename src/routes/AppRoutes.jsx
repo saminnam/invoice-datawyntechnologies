@@ -1,6 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import ProtectedRoute from './ProtectedRoute'
-import { CompanyProvider } from '../context/CompanyContext'
+import PermissionRoute from './PermissionRoute'
 
 // Layouts
 import DashboardLayout from '../layouts/DashboardLayout'
@@ -34,6 +34,10 @@ import InvoiceDetailPage from '../pages/invoices/InvoiceDetailPage'
 // Settings Pages
 import CompanySettingsPage from '../pages/settings/CompanySettingsPage'
 
+// User Management Pages
+import UserListPage from '../pages/users/UserListPage'
+import RoleListPage from '../pages/users/RoleListPage'
+
 const AppRoutes = () => {
   return (
     <Routes>
@@ -45,38 +49,108 @@ const AppRoutes = () => {
       {/* Protected Routes */}
       <Route path="/" element={
         <ProtectedRoute>
-          <CompanyProvider>
-            <DashboardLayout />
-          </CompanyProvider>
+          <DashboardLayout />
         </ProtectedRoute>
       }>
         <Route index element={<Navigate to="/dashboard" replace />} />
         
-        <Route path="dashboard" element={<DashboardPage />} />
+        <Route path="dashboard" element={
+          <PermissionRoute requiredPermission="dashboard.view">
+            <DashboardPage />
+          </PermissionRoute>
+        } />
         
         {/* Customer Routes */}
-        <Route path="customers" element={<CustomerListPage />} />
-        <Route path="customers/new" element={<CustomerCreatePage />} />
-        <Route path="customers/:id" element={<CustomerDetailPage />} />
-        <Route path="customers/:id/edit" element={<CustomerEditPage />} />
+        <Route path="customers" element={
+          <PermissionRoute requiredPermission="customers.view">
+            <CustomerListPage />
+          </PermissionRoute>
+        } />
+        <Route path="customers/new" element={
+          <PermissionRoute requiredPermission="customers.create">
+            <CustomerCreatePage />
+          </PermissionRoute>
+        } />
+        <Route path="customers/:id" element={
+          <PermissionRoute requiredPermission="customers.view">
+            <CustomerDetailPage />
+          </PermissionRoute>
+        } />
+        <Route path="customers/:id/edit" element={
+          <PermissionRoute requiredPermission="customers.edit">
+            <CustomerEditPage />
+          </PermissionRoute>
+        } />
         
         {/* Product Routes */}
-        <Route path="products" element={<ProductListPage />} />
-        <Route path="products/new" element={<ProductCreatePage />} />
-        <Route path="products/:id/edit" element={<ProductEditPage />} />
+        <Route path="products" element={
+          <PermissionRoute requiredPermission="products.view">
+            <ProductListPage />
+          </PermissionRoute>
+        } />
+        <Route path="products/new" element={
+          <PermissionRoute requiredPermission="products.create">
+            <ProductCreatePage />
+          </PermissionRoute>
+        } />
+        <Route path="products/:id/edit" element={
+          <PermissionRoute requiredPermission="products.edit">
+            <ProductEditPage />
+          </PermissionRoute>
+        } />
         
         {/* Proforma Invoice Routes */}
-        <Route path="proforma" element={<ProformaListPage />} />
-        <Route path="proforma/new" element={<ProformaCreatePage />} />
-        <Route path="proforma/:id" element={<ProformaDetailPage />} />
-        <Route path="proforma/:id/edit" element={<ProformaEditPage />} />
+        <Route path="proforma" element={
+          <PermissionRoute requiredPermission="proforma.view">
+            <ProformaListPage />
+          </PermissionRoute>
+        } />
+        <Route path="proforma/new" element={
+          <PermissionRoute requiredPermission="proforma.create">
+            <ProformaCreatePage />
+          </PermissionRoute>
+        } />
+        <Route path="proforma/:id" element={
+          <PermissionRoute requiredPermission="proforma.view">
+            <ProformaDetailPage />
+          </PermissionRoute>
+        } />
+        <Route path="proforma/:id/edit" element={
+          <PermissionRoute requiredPermission="proforma.edit">
+            <ProformaEditPage />
+          </PermissionRoute>
+        } />
         
         {/* Invoice Routes */}
-        <Route path="invoices" element={<InvoiceListPage />} />
-        <Route path="invoices/:id" element={<InvoiceDetailPage />} />
+        <Route path="invoices" element={
+          <PermissionRoute requiredPermission="invoices.view">
+            <InvoiceListPage />
+          </PermissionRoute>
+        } />
+        <Route path="invoices/:id" element={
+          <PermissionRoute requiredPermission="invoices.view">
+            <InvoiceDetailPage />
+          </PermissionRoute>
+        } />
         
         {/* Settings Routes */}
-        <Route path="settings/company" element={<CompanySettingsPage />} />
+        <Route path="settings/company" element={
+          <PermissionRoute requiredPermission="settings.view">
+            <CompanySettingsPage />
+          </PermissionRoute>
+        } />
+        
+        {/* User Management Routes */}
+        <Route path="settings/users" element={
+          <PermissionRoute requiredPermission="users.view">
+            <UserListPage />
+          </PermissionRoute>
+        } />
+        <Route path="settings/roles" element={
+          <PermissionRoute requiredPermission="roles.view">
+            <RoleListPage />
+          </PermissionRoute>
+        } />
       </Route>
       
       {/* Catch all - redirect to login if not authenticated */}

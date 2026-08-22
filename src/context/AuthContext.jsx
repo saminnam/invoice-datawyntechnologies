@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react'
+import { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react'
 import { authService } from '../services/authService'
 import toast from 'react-hot-toast'
 
@@ -18,7 +18,7 @@ export const AuthProvider = ({ children }) => {
         setToken(storedToken)
         setUser(JSON.parse(storedUser))
         
-        // Verify token is still valid
+        // Verify token is still valid (skip if server is not available)
         try {
           const response = await authService.getCurrentUser()
           if (response.success) {
@@ -32,20 +32,26 @@ export const AuthProvider = ({ children }) => {
             setUser(null)
           }
         } catch (error) {
-          // Clear invalid token on error
-          localStorage.removeItem('token')
-          localStorage.removeItem('user')
-          setToken(null)
-          setUser(null)
+          // Only clear token on 401 errors, keep user for other errors (server might be down)
+          if (error.response?.status === 401) {
+            localStorage.removeItem('token')
+            localStorage.removeItem('user')
+            setToken(null)
+            setUser(null)
+          } else {
+            console.warn('Auth verification failed (server may be unavailable):', error)
+            // Keep the stored user to prevent continuous refreshing
+          }
         }
       }
       setLoading(false)
     }
 
     initAuth()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const login = async (email, password) => {
+  const login = useCallback(async (email, password) => {
     try {
       const response = await authService.login(email, password)
       if (response.success) {
@@ -63,9 +69,9 @@ export const AuthProvider = ({ children }) => {
       toast.error(message)
       return { success: false, message }
     }
-  }
+  }, [])
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       await authService.logout()
     } catch (error) {
@@ -77,21 +83,81 @@ export const AuthProvider = ({ children }) => {
       setUser(null)
       toast.success('Logged out successfully')
     }
-  }
+  }, [])
 
-  const isAuthenticated = () => {
+  const isAuthenticated = useCallback(() => {
     return !!token && !!user
-  }
+  }, [token, user])
 
-  const hasRole = (roles) => {
+  const hasRole = useCallback((roles) => {
     if (!user) return false
     if (Array.isArray(roles)) {
       return roles.includes(user.role)
     }
     return user.role === roles
-  }
+  }, [user])
 
-  const value = {
+  const hasPermission = useCallback((permissionName) => {
+    if (!user) return false
+    
+    // Admin users have all permissions (check multiple ways)
+    const isAdmin = user.role?.name === 'Admin' || 
+                    user.role?.name?.toLowerCase() === 'admin' ||
+                    user.role?.name?.toLowerCase().includes('admin') ||
+                    user.legacyRole === 'admin' ||
+                    user.role === 'admin'
+    
+    if (isAdmin) {
+      return true
+    }
+    
+    // Check direct permissions
+    const hasDirectPermission = user.permissions?.some(p => p.name === permissionName)
+    
+    // Check role permissions (handle both populated and unpopulated)
+    let hasRolePermission = false
+    if (user.role?.permissions && user.role.permissions.length > 0) {
+      // If permissions is an array of objects (populated)
+      if (typeof user.role.permissions[0] === 'object') {
+        hasRolePermission = user.role.permissions.some(p => p.name === permissionName)
+      } else {
+        // If permissions is an array of IDs (not populated), we can't check without refetching
+        console.warn('Role permissions are not populated, cannot check permissions properly')
+      }
+    }
+    
+    const result = hasDirectPermission || hasRolePermission
+    return result
+  }, [user])
+
+  const hasAnyPermission = useCallback((permissionNames) => {
+    if (!user) return false
+    
+    // Admin users have all permissions (check multiple ways)
+    const isAdmin = user.role?.name === 'Admin' || 
+                    user.role?.name?.toLowerCase() === 'admin' ||
+                    user.role?.name?.toLowerCase().includes('admin') ||
+                    user.legacyRole === 'admin' ||
+                    user.role === 'admin'
+    
+    if (isAdmin) return true
+    
+    return permissionNames.some(perm => hasPermission(perm))
+  }, [user, hasPermission])
+
+  const refreshUser = useCallback(async () => {
+    try {
+      const response = await authService.getCurrentUser()
+      if (response.success) {
+        setUser(response.data)
+        localStorage.setItem('user', JSON.stringify(response.data))
+      }
+    } catch (error) {
+      console.error('Failed to refresh user:', error)
+    }
+  }, [])
+
+  const value = useMemo(() => ({
     user,
     token,
     loading,
@@ -99,7 +165,10 @@ export const AuthProvider = ({ children }) => {
     logout,
     isAuthenticated,
     hasRole,
-  }
+    hasPermission,
+    hasAnyPermission,
+    refreshUser,
+  }), [user, token, loading, login, logout, isAuthenticated, hasRole, hasPermission, hasAnyPermission, refreshUser])
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

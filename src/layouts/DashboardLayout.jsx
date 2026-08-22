@@ -1,6 +1,6 @@
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { useState } from 'react'
-import { FiMenu, FiX, FiHome, FiUsers, FiBox, FiFileText, FiSettings, FiLogOut } from 'react-icons/fi'
+import { FiMenu, FiX, FiHome, FiUsers, FiBox, FiFileText, FiSettings, FiLogOut, FiUserCheck, FiShield } from 'react-icons/fi'
 import { useAuth } from '../context/AuthContext'
 import { useApp } from '../context/AppContext'
 import { useCompany } from '../context/CompanyContext'
@@ -8,7 +8,7 @@ import Breadcrumbs from '../components/Breadcrumbs'
 import defaultLogo from '../assets/datawyn-logo.png'
 
 const DashboardLayout = () => {
-  const { user, logout } = useAuth()
+  const { user, logout, hasPermission } = useAuth()
   const { sidebarOpen, toggleSidebar } = useApp()
   const { companySettings } = useCompany()
   const navigate = useNavigate()
@@ -21,13 +21,20 @@ const DashboardLayout = () => {
   }
 
   const menuItems = [
-    { path: '/dashboard', icon: FiHome, label: 'Dashboard' },
-    { path: '/customers', icon: FiUsers, label: 'Customers' },
-    { path: '/products', icon: FiBox, label: 'Products' },
-    { path: '/proforma', icon: FiFileText, label: 'Proforma Invoices' },
-    { path: '/invoices', icon: FiFileText, label: 'Invoices' },
-    { path: '/settings/company', icon: FiSettings, label: 'Settings' },
+    { path: '/dashboard', icon: FiHome, label: 'Dashboard', permission: 'dashboard.view' },
+    { path: '/customers', icon: FiUsers, label: 'Customers', permission: 'customers.view' },
+    { path: '/products', icon: FiBox, label: 'Products', permission: 'products.view' },
+    { path: '/proforma', icon: FiFileText, label: 'Proforma Invoices', permission: 'proforma.view' },
+    { path: '/invoices', icon: FiFileText, label: 'Invoices', permission: 'invoices.view' },
+    { path: '/settings/users', icon: FiUserCheck, label: 'Users', permission: 'users.view' },
+    { path: '/settings/roles', icon: FiShield, label: 'Roles', permission: 'roles.view' },
+    { path: '/settings/company', icon: FiSettings, label: 'Settings', permission: 'settings.view' },
   ]
+
+  const filteredMenuItems = menuItems.filter(item => {
+    if (!item.permission) return true
+    return hasPermission(item.permission)
+  })
 
   const isActive = (path) => location.pathname === path || location.pathname.startsWith(path + '/')
 
@@ -61,7 +68,7 @@ const DashboardLayout = () => {
         <div className="lg:hidden fixed inset-0 z-40 bg-black bg-opacity-50">
           <div className="bg-white w-64 h-full p-4">
             <nav className="space-y-2 mt-16">
-              {menuItems.map((item) => {
+              {filteredMenuItems.map((item) => {
                 const Icon = item.icon
                 return (
                   <button
@@ -115,7 +122,7 @@ const DashboardLayout = () => {
         </div>
 
         <nav className="p-4 space-y-2">
-          {menuItems.map((item) => {
+          {filteredMenuItems.map((item) => {
             const Icon = item.icon
             return (
               <button

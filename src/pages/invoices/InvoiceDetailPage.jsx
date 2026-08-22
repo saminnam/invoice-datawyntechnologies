@@ -318,45 +318,73 @@ const InvoiceDetailPage = () => {
           )}
 
           {/* Bank Details */}
-          <div className="border-t pt-6 mb-8">
-            <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <span className="w-1 h-5 bg-primary-600 rounded"></span>
-              Bank Details
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm text-gray-500">Bank Name</p>
-                <p className="font-medium text-gray-900">{companySettings?.bankDetails?.bankName || 'HDFC Bank'}</p>
+          {companySettings?.bankDetails?.bankName || companySettings?.bankDetails?.accountNumber || companySettings?.bankDetails?.ifsc ? (
+            <div className="border-t pt-6 mb-8">
+              <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <span className="w-1 h-5 bg-primary-600 rounded"></span>
+                Bank Details
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {companySettings?.bankDetails?.bankName && (
+                  <div>
+                    <p className="text-sm text-gray-500">Bank Name</p>
+                    <p className="font-medium text-gray-900">{companySettings.bankDetails.bankName}</p>
+                  </div>
+                )}
+                {companySettings?.bankDetails?.accountNumber && (
+                  <div>
+                    <p className="text-sm text-gray-500">Account Number</p>
+                    <p className="font-medium text-gray-900">{companySettings.bankDetails.accountNumber}</p>
+                  </div>
+                )}
+                {companySettings?.bankDetails?.ifsc && (
+                  <div>
+                    <p className="text-sm text-gray-500">IFSC Code</p>
+                    <p className="font-medium text-gray-900">{companySettings.bankDetails.ifsc}</p>
+                  </div>
+                )}
+                {companySettings?.bankDetails?.branch && (
+                  <div>
+                    <p className="text-sm text-gray-500">Branch</p>
+                    <p className="font-medium text-gray-900">{companySettings.bankDetails.branch}</p>
+                  </div>
+                )}
+                {companySettings?.bankDetails?.accountHolderName && (
+                  <div>
+                    <p className="text-sm text-gray-500">Account Holder</p>
+                    <p className="font-medium text-gray-900">{companySettings.bankDetails.accountHolderName}</p>
+                  </div>
+                )}
               </div>
-              <div>
-                <p className="text-sm text-gray-500">Account Number</p>
-                <p className="font-medium text-gray-900">{companySettings?.bankDetails?.accountNumber || '1234567890123456'}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">IFSC Code</p>
-                <p className="font-medium text-gray-900">{companySettings?.bankDetails?.ifsc || 'HDFC0001234'}</p>
-              </div>
-              {companySettings?.bankDetails?.branch && (
-                <div>
-                  <p className="text-sm text-gray-500">Branch</p>
-                  <p className="font-medium text-gray-900">{companySettings.bankDetails.branch}</p>
-                </div>
-              )}
-              {companySettings?.bankDetails?.accountHolderName && (
-                <div>
-                  <p className="text-sm text-gray-500">Account Holder</p>
-                  <p className="font-medium text-gray-900">{companySettings.bankDetails.accountHolderName}</p>
-                </div>
-              )}
             </div>
-          </div>
+          ) : null}
 
           {/* Signature */}
           <div className="flex justify-end">
             <div className="text-center">
-              <div className="border-b-2 border-gray-300 w-48 mb-2"></div>
-              <p className="text-sm text-gray-600">Authorized Signature</p>
-              <p className="text-xs text-gray-500 mt-1">{companySettings?.companyName || 'Datawyn Technologies'}</p>
+              {companySettings?.authorizedSignatory?.signatureImage && (
+                <div className="mb-2">
+                  <img
+                    src={companySettings.authorizedSignatory.signatureImage}
+                    alt="Authorized Signature"
+                    className="w-32 h-20 object-contain mx-auto"
+                  />
+                </div>
+              )}
+              {!companySettings?.authorizedSignatory?.signatureImage && (
+                <div className="border-b-2 border-gray-300 w-48 mb-2"></div>
+              )}
+              <p className="text-sm font-medium text-gray-900">
+                {companySettings?.authorizedSignatory?.name || 'Authorized Signatory'}
+              </p>
+              {companySettings?.authorizedSignatory?.designation && (
+                <p className="text-xs text-gray-500 mt-1">
+                  {companySettings.authorizedSignatory.designation}
+                </p>
+              )}
+              <p className="text-xs text-gray-500 mt-1">
+                {companySettings?.companyName || 'Datawyn Technologies'}
+              </p>
             </div>
           </div>
         </div>

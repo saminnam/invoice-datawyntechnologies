@@ -5,12 +5,14 @@ import { useCompany } from '../../context/CompanyContext'
 import toast from 'react-hot-toast'
 
 const CompanySettingsPage = () => {
-  const { hasRole } = useAuth()
+  const { hasPermission } = useAuth()
   const { refreshCompany } = useCompany()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [logoFile, setLogoFile] = useState(null)
   const [logoPreview, setLogoPreview] = useState('')
+  const [signatureFile, setSignatureFile] = useState(null)
+  const [signaturePreview, setSignaturePreview] = useState('')
   const [formData, setFormData] = useState({
     companyName: '',
     email: '',
@@ -41,6 +43,11 @@ const CompanySettingsPage = () => {
       defaultPaymentTerms: '',
       defaultNotes: '',
       defaultTerms: ''
+    },
+    authorizedSignatory: {
+      name: '',
+      designation: '',
+      signatureImage: ''
     }
   })
 
@@ -84,10 +91,18 @@ const CompanySettingsPage = () => {
             defaultPaymentTerms: '',
             defaultNotes: '',
             defaultTerms: ''
+          },
+          authorizedSignatory: settings.authorizedSignatory || {
+            name: '',
+            designation: '',
+            signatureImage: ''
           }
         })
         if (settings.logo) {
           setLogoPreview(settings.logo)
+        }
+        if (settings.authorizedSignatory?.signatureImage) {
+          setSignaturePreview(settings.authorizedSignatory.signatureImage)
         }
       }
     } catch (error) {
@@ -114,14 +129,14 @@ const CompanySettingsPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault()
 
-    if (!hasRole('admin')) {
-      toast.error('Only admin can update company settings')
+    if (!hasPermission('settings.edit')) {
+      toast.error('You do not have permission to update company settings')
       return
     }
 
     setSaving(true)
     try {
-      const response = await companyService.updateCompanySettings(formData, logoFile)
+      const response = await companyService.updateCompanySettings(formData, logoFile, signatureFile)
       if (response.success) {
         toast.success('Company settings updated successfully')
         refreshCompany() // Refresh company context to update all components
@@ -144,6 +159,26 @@ const CompanySettingsPage = () => {
   const handleRemoveLogo = () => {
     setLogoFile(null)
     setLogoPreview('')
+  }
+
+  const handleSignatureChange = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      setSignatureFile(file)
+      setSignaturePreview(URL.createObjectURL(file))
+    }
+  }
+
+  const handleRemoveSignature = () => {
+    setSignatureFile(null)
+    setSignaturePreview('')
+    setFormData(prev => ({
+      ...prev,
+      authorizedSignatory: {
+        ...prev.authorizedSignatory,
+        signatureImage: ''
+      }
+    }))
   }
 
   if (loading) {
@@ -405,6 +440,77 @@ const CompanySettingsPage = () => {
             </div>
           </div>
 
+          {/* Authorized Signatory */}
+          <div className="card">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Authorized Signatory</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  CEO/Founder Name
+                </label>
+                <input
+                  type="text"
+                  name="authorizedSignatory.name"
+                  value={formData.authorizedSignatory.name}
+                  onChange={handleChange}
+                  className="input"
+                  placeholder="Enter CEO or Founder name"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Designation
+                </label>
+                <input
+                  type="text"
+                  name="authorizedSignatory.designation"
+                  value={formData.authorizedSignatory.designation}
+                  onChange={handleChange}
+                  className="input"
+                  placeholder="e.g., CEO, Founder, Director"
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Authorized Signature
+                </label>
+                <div className="flex items-start gap-4">
+                  {signaturePreview && (
+                    <div className="w-32 h-20 rounded-lg border-2 border-gray-200 overflow-hidden flex-shrink-0 bg-white">
+                      <img
+                        src={signaturePreview}
+                        alt="Authorized Signature"
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+                  )}
+                  <div className="flex-1">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleSignatureChange}
+                      className="input"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Upload signature image (PNG, JPG, GIF). Recommended: transparent background, max 2MB.
+                    </p>
+                    {signaturePreview && (
+                      <button
+                        type="button"
+                        onClick={handleRemoveSignature}
+                        className="mt-2 text-sm text-red-600 hover:text-red-800"
+                      >
+                        Remove Signature
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Invoice Settings */}
           <div className="card">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Invoice Settings</h2>
@@ -510,7 +616,7 @@ const CompanySettingsPage = () => {
         <div className="flex justify-end gap-3">
           <button
             type="submit"
-            disabled={saving || !hasRole('admin')}
+            disabled={saving || !hasPermission('settings.edit')}
             className="btn bg-black text-white"
           >
             {saving ? 'Saving...' : 'Save Changes'}

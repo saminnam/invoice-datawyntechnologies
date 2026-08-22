@@ -8,14 +8,14 @@ import { CompanyProvider } from './context/CompanyContext'
 function App() {
   return (
     <BrowserRouter future={{ v7_relativeSplatPath: true }}>
-      <AppProvider>
-        <CompanyProvider>
-          <AuthProvider>
+      <AuthProvider>
+        <AppProvider>
+          <CompanyProvider>
             <AppRoutes />
             <Toaster position="top-right" />
-          </AuthProvider>
-        </CompanyProvider>
-      </AppProvider>
+          </CompanyProvider>
+        </AppProvider>
+      </AuthProvider>
     </BrowserRouter>
   )
 }

@@ -6,7 +6,7 @@ export const companyService = {
     return response.data
   },
 
-  updateCompanySettings: async (settingsData, logoFile) => {
+  updateCompanySettings: async (settingsData, logoFile, signatureFile) => {
     const formData = new FormData()
     
     // Append all settings data
@@ -21,6 +21,11 @@ export const companyService = {
     // Append logo file if provided
     if (logoFile) {
       formData.append('logo', logoFile)
+    }
+    
+    // Append signature file if provided
+    if (signatureFile) {
+      formData.append('signature', signatureFile)
     }
     
     const response = await api.put('/company', formData, {

@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from 'react'
+import { createContext, useContext, useState, useCallback, useMemo } from 'react'
 
 const AppContext = createContext(null)
 
@@ -6,16 +6,16 @@ export const AppProvider = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [globalLoading, setGlobalLoading] = useState(false)
 
-  const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen)
-  }
+  const toggleSidebar = useCallback(() => {
+    setSidebarOpen(prev => !prev)
+  }, [])
 
-  const value = {
+  const value = useMemo(() => ({
     sidebarOpen,
     toggleSidebar,
     globalLoading,
     setGlobalLoading,
-  }
+  }), [sidebarOpen, toggleSidebar, globalLoading])
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>
 }

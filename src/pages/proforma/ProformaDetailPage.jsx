@@ -363,8 +363,31 @@ const ProformaDetailPage = () => {
 
         {/* Signature */}
         <div className="mt-12 text-right">
-          <p className="text-sm text-gray-600">Authorized Signature</p>
-          <div className="border-b-2 border-gray-400 w-48 ml-auto mt-8"></div>
+          <div className="text-center">
+            {companySettings?.authorizedSignatory?.signatureImage && (
+              <div className="mb-2">
+                <img
+                  src={companySettings.authorizedSignatory.signatureImage}
+                  alt="Authorized Signature"
+                  className="w-32 h-20 object-contain mx-auto"
+                />
+              </div>
+            )}
+            {!companySettings?.authorizedSignatory?.signatureImage && (
+              <div className="border-b-2 border-gray-400 w-48 ml-auto mt-8"></div>
+            )}
+            <p className="text-sm font-medium text-gray-900 mt-2">
+              {companySettings?.authorizedSignatory?.name || 'Authorized Signatory'}
+            </p>
+            {companySettings?.authorizedSignatory?.designation && (
+              <p className="text-xs text-gray-500 mt-1">
+                {companySettings.authorizedSignatory.designation}
+              </p>
+            )}
+            <p className="text-xs text-gray-500 mt-1">
+              {companySettings?.companyName || 'Datawyn Technologies'}
+            </p>
+          </div>
         </div>
       </div>
     </div>

@@ -2,9 +2,9 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { FiMail, FiLock, FiEye, FiEyeOff } from 'react-icons/fi'
+import defaultLogo from '../../assets/datawyn-logo.png'
 
 const LoginPage = () => {
-  console.log('LoginPage rendering')
   const navigate = useNavigate()
   const { login } = useAuth()
   const [formData, setFormData] = useState({
@@ -62,6 +62,12 @@ const LoginPage = () => {
   return (
     <div className="bg-white rounded-lg shadow-md p-8" style={{ minHeight: '400px' }}>
       <div className="text-center mb-8">
+        <img 
+          src={defaultLogo} 
+          alt="Datawyn Logo" 
+          className="mx-auto mb-4"
+          style={{ height: '60px', width: 'auto' }}
+        />
         <h1 className="text-2xl font-bold text-gray-900 mb-2">Welcome Back</h1>
         <p className="text-gray-600">Sign in to your account</p>
       </div>
@@ -120,7 +126,7 @@ const LoginPage = () => {
           type="submit"
           disabled={loading}
           className="btn btn-primary w-full flex items-center justify-center gap-2"
-          style={{ width: '100%', padding: '0.5rem 1rem', backgroundColor: '#0284c7', color: 'white', borderRadius: '0.5rem', border: 'none', cursor: 'pointer' }}
+          style={{ width: '100%', padding: '0.5rem 1rem', backgroundColor: '#000000', color: 'white', borderRadius: '0.5rem', border: 'none', cursor: 'pointer' }}
         >
           {loading ? (
             <>

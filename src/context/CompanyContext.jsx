@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react'
 import { companyService } from '../services/companyService'
 
 const CompanyContext = createContext(null)
@@ -7,7 +7,7 @@ export const CompanyProvider = ({ children }) => {
   const [companySettings, setCompanySettings] = useState(null)
   const [loading, setLoading] = useState(false)
 
-  const fetchCompanySettings = async () => {
+  const fetchCompanySettings = useCallback(async () => {
     setLoading(true)
     try {
       const response = await companyService.getCompanySettings()
@@ -19,17 +19,18 @@ export const CompanyProvider = ({ children }) => {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
     fetchCompanySettings()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const value = {
+  const value = useMemo(() => ({
     companySettings,
     loading,
     refreshCompany: fetchCompanySettings,
-  }
+  }), [companySettings, loading, fetchCompanySettings])
 
   return <CompanyContext.Provider value={value}>{children}</CompanyContext.Provider>
 }
