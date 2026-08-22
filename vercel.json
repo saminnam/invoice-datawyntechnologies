@@ -1,4 +1,9 @@
 {
+  "build": {
+    "env": {
+      "VITE_API_URL": "https://invoice-datawyn-backend.vercel.app/api"
+    }
+  },
   "rewrites": [
     {
       "source": "/(.*)",
