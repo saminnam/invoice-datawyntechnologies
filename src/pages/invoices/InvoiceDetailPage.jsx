@@ -131,116 +131,136 @@ const InvoiceDetailPage = () => {
       </div>
 
       {/* Invoice Preview */}
-      <div ref={invoiceRef} className="bg-white rounded-xl shadow-lg overflow-hidden print:shadow-none print:rounded-none">
+      <div ref={invoiceRef} className="bg-white shadow-lg overflow-hidden print:shadow-none" style={{ maxWidth: '800px', margin: '0 auto' }}>
         {/* Invoice Header */}
-        <div className="bg-gray-50 px-8 py-6 print:from-white print:to-white print:bg-white print:border-b">
+        <div className="px-8 py-6 print:px-6 print:py-4 border-b-2 border-black">
           <div className="flex items-start justify-between">
             <div className="flex items-start gap-4">
-              <div className="w-16 h-16 bg-white rounded-lg p-2 shadow-sm print:shadow-none">
+              <div className="w-20 h-20 bg-white border border-gray-200 rounded-lg p-2 flex-shrink-0">
                 <img
                   src={companySettings?.logo || defaultLogo}
                   alt="Company Logo"
                   className="w-full h-full object-contain"
                 />
               </div>
-              <div className="flex-1 print:text-gray-900">
-                <h1 className="text-2xl font-bold">
+              <div className="flex-1">
+                <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
                   {companySettings?.companyName || 'Datawyn Technologies'}
                 </h1>
-                <p className="text-sm opacity-90 mt-1">
-                  {companySettings?.address?.street && `${companySettings.address.street}, `}
-                  {companySettings?.address?.city && `${companySettings.address.city}, `}
-                  {companySettings?.address?.state && `${companySettings.address.state} - `}
-                  {companySettings?.address?.pincode || '600001'}
-                </p>
+                <div className="mt-2 text-sm text-gray-600 space-y-1">
+                  {companySettings?.address?.street && (
+                    <p>{companySettings.address.street}</p>
+                  )}
+                  {(companySettings?.address?.city || companySettings?.address?.state || companySettings?.address?.pincode) && (
+                    <p>
+                      {companySettings?.address?.city && `${companySettings.address.city}, `}
+                      {companySettings?.address?.state && `${companySettings.address.state} - `}
+                      {companySettings?.address?.pincode || '600001'}
+                    </p>
+                  )}
+                  {companySettings?.email && <p>{companySettings.email}</p>}
+                  {companySettings?.phone && <p>{companySettings.phone}</p>}
+                  {companySettings?.gstin && <p className="font-medium">GSTIN: {companySettings.gstin}</p>}
+                </div>
               </div>
             </div>
-            <div className="text-right print:text-gray-900">
-              <h2 className="text-3xl font-bold tracking-wide">TAX INVOICE</h2>
-              <p className="text-sm opacity-90 mt-1">
-                {companySettings?.gstin && `GSTIN: ${companySettings.gstin}`}
-              </p>
+            <div className="text-right">
+              <div className="bg-black text-white px-4 py-2 rounded-t-lg">
+                <h2 className="text-xl font-bold tracking-wider">TAX INVOICE</h2>
+              </div>
+              <div className="bg-gray-100 px-4 py-2 rounded-b-lg border border-gray-200 border-t-0">
+                <p className="text-sm font-semibold text-gray-900">{invoice.invoiceNumber}</p>
+              </div>
             </div>
           </div>
         </div>
 
         <div className="p-8 print:p-6">
           {/* Invoice Info */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <div className="grid grid-cols-2 gap-8 mb-8">
             {/* Invoice Details */}
-            <div className="space-y-3">
-              <div className="flex items-baseline gap-3">
-                <span className="text-gray-500 text-sm w-28">Invoice No:</span>
-                <span className="font-semibold text-lg">{invoice.invoiceNumber}</span>
-              </div>
-              <div className="flex items-baseline gap-3">
-                <span className="text-gray-500 text-sm w-28">Date:</span>
-                <span className="font-medium">{formatDate(invoice.invoiceDate)}</span>
-              </div>
-              {invoice.proformaInvoice && (
-                <div className="flex items-baseline gap-3">
-                  <span className="text-gray-500 text-sm w-28">Proforma Ref:</span>
-                  <span className="font-medium">{invoice.proformaInvoice.invoiceNumber}</span>
+            <div>
+              <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Invoice Details</h3>
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Invoice No:</span>
+                  <span className="text-sm font-semibold text-gray-900">{invoice.invoiceNumber}</span>
                 </div>
-              )}
-              <div className="flex items-baseline gap-3">
-                <span className="text-gray-500 text-sm w-28">Status:</span>
-                <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                  invoice.status === 'paid' 
-                    ? 'bg-green-100 text-green-800' 
-                    : invoice.status === 'sent' 
-                    ? 'bg-blue-100 text-blue-800' 
-                    : 'bg-gray-100 text-gray-800'
-                }`}>
-                  {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
-                </span>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Date:</span>
+                  <span className="text-sm font-medium text-gray-900">{formatDate(invoice.invoiceDate)}</span>
+                </div>
+                {invoice.proformaInvoice && (
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-600">Proforma Ref:</span>
+                    <span className="text-sm font-medium text-gray-900">{invoice.proformaInvoice.invoiceNumber}</span>
+                  </div>
+                )}
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Status:</span>
+                  <span className={`text-sm font-semibold px-2 py-0.5 rounded ${
+                    invoice.status === 'paid' 
+                      ? 'bg-green-100 text-green-800' 
+                      : invoice.status === 'sent' 
+                      ? 'bg-blue-100 text-blue-800' 
+                      : 'bg-gray-100 text-gray-800'
+                  }`}>
+                    {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
+                  </span>
+                </div>
               </div>
             </div>
 
             {/* Customer Details */}
-            <div className="bg-gray-50 rounded-lg p-4 print:bg-white print:border">
-              <h3 className="font-semibold text-gray-900 mb-3 text-sm uppercase tracking-wide">Bill To</h3>
-              <p className="font-medium text-gray-900">{invoice.customerSnapshot?.companyName}</p>
-              <p className="text-sm text-gray-600 mt-1">{invoice.customerSnapshot?.contactPerson}</p>
-              <p className="text-sm text-gray-600">{invoice.customerSnapshot?.email}</p>
-              <p className="text-sm text-gray-600">{invoice.customerSnapshot?.phone}</p>
-              <p className="text-sm text-gray-600 mt-2">{invoice.customerSnapshot?.billingAddress?.street}</p>
-              <p className="text-sm text-gray-600">
-                {invoice.customerSnapshot?.billingAddress?.city}, {invoice.customerSnapshot?.billingAddress?.state} - {invoice.customerSnapshot?.billingAddress?.pincode}
-              </p>
-              {invoice.customerSnapshot?.gstin && (
-                <p className="text-sm text-gray-600 mt-1">GSTIN: {invoice.customerSnapshot.gstin}</p>
-              )}
+            <div>
+              <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Bill To</h3>
+              <div className="space-y-1">
+                <p className="font-semibold text-gray-900">{invoice.customerSnapshot?.companyName}</p>
+                <p className="text-sm text-gray-600">{invoice.customerSnapshot?.contactPerson}</p>
+                <p className="text-sm text-gray-600">{invoice.customerSnapshot?.email}</p>
+                <p className="text-sm text-gray-600">{invoice.customerSnapshot?.phone}</p>
+                {invoice.customerSnapshot?.billingAddress?.street && (
+                  <p className="text-sm text-gray-600">{invoice.customerSnapshot.billingAddress.street}</p>
+                )}
+                {(invoice.customerSnapshot?.billingAddress?.city || invoice.customerSnapshot?.billingAddress?.state) && (
+                  <p className="text-sm text-gray-600">
+                    {invoice.customerSnapshot?.billingAddress?.city}, {invoice.customerSnapshot?.billingAddress?.state} - {invoice.customerSnapshot?.billingAddress?.pincode}
+                  </p>
+                )}
+                {invoice.customerSnapshot?.gstin && (
+                  <p className="text-sm text-gray-600">GSTIN: {invoice.customerSnapshot.gstin}</p>
+                )}
+              </div>
             </div>
           </div>
 
           {/* Items Table */}
-          <div className="mb-8 overflow-x-auto">
-            <table className="w-full">
+          <div className="mb-8">
+            <table className="w-full border-collapse">
               <thead>
-                <tr className="border-b-2 border-gray-200">
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700 bg-gray-50">Description</th>
-                  <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700 bg-gray-50 w-20">Qty</th>
-                  <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700 bg-gray-50 w-28">Rate</th>
-                  <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700 bg-gray-50 w-20">GST %</th>
-                  <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700 bg-gray-50 w-28">Taxable</th>
-                  <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700 bg-gray-50 w-28">Total</th>
+                <tr className="border-b-2 border-black">
+                  <th className="text-left py-3 px-4 text-xs font-bold text-gray-700 uppercase tracking-wider bg-gray-50 border-b">Description</th>
+                  <th className="text-center py-3 px-4 text-xs font-bold text-gray-700 uppercase tracking-wider bg-gray-50 border-b w-16">Qty</th>
+                  <th className="text-right py-3 px-4 text-xs font-bold text-gray-700 uppercase tracking-wider bg-gray-50 border-b w-24">Rate</th>
+                  <th className="text-center py-3 px-4 text-xs font-bold text-gray-700 uppercase tracking-wider bg-gray-50 border-b w-16">GST %</th>
+                  <th className="text-right py-3 px-4 text-xs font-bold text-gray-700 uppercase tracking-wider bg-gray-50 border-b w-24">Taxable</th>
+                  <th className="text-right py-3 px-4 text-xs font-bold text-gray-700 uppercase tracking-wider bg-gray-50 border-b w-24">Total</th>
                 </tr>
               </thead>
               <tbody>
                 {invoice.items.map((item, index) => (
-                  <tr key={index} className="border-b border-gray-100 hover:bg-gray-50 print:hover:bg-white">
-                    <td className="py-4 px-4">
-                      <p className="font-medium text-gray-900">{item.productSnapshot?.name}</p>
+                  <tr key={index} className="border-b border-gray-200">
+                    <td className="py-3 px-4 align-top">
+                      <p className="font-medium text-gray-900 text-sm">{item.productSnapshot?.name}</p>
                       {item.productSnapshot?.description && (
-                        <p className="text-sm text-gray-500 mt-1">{item.productSnapshot.description}</p>
+                        <p className="text-xs text-gray-500 mt-1">{item.productSnapshot.description}</p>
                       )}
                     </td>
-                    <td className="py-4 px-4 text-right text-gray-700">{item.quantity}</td>
-                    <td className="py-4 px-4 text-right text-gray-700">{formatCurrency(item.rate)}</td>
-                    <td className="py-4 px-4 text-right text-gray-700">{item.gstRate}%</td>
-                    <td className="py-4 px-4 text-right text-gray-700">{formatCurrency(item.taxableAmount)}</td>
-                    <td className="py-4 px-4 text-right font-semibold text-gray-900">{formatCurrency(item.total)}</td>
+                    <td className="py-3 px-4 text-center text-gray-700 text-sm">{item.quantity}</td>
+                    <td className="py-3 px-4 text-right text-gray-700 text-sm">{formatCurrency(item.rate)}</td>
+                    <td className="py-3 px-4 text-center text-gray-700 text-sm">{item.gstRate}%</td>
+                    <td className="py-3 px-4 text-right text-gray-700 text-sm">{formatCurrency(item.taxableAmount)}</td>
+                    <td className="py-3 px-4 text-right font-semibold text-gray-900 text-sm">{formatCurrency(item.total)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -249,52 +269,52 @@ const InvoiceDetailPage = () => {
 
           {/* Summary */}
           <div className="flex justify-end mb-8">
-            <div className="w-full md:w-80 space-y-3">
-              <div className="flex justify-between items-center py-2">
-                <span className="text-gray-600">Subtotal</span>
-                <span className="font-medium">{formatCurrency(invoice.subtotal)}</span>
+            <div className="w-64 space-y-2">
+              <div className="flex justify-between items-center py-1 border-b border-gray-200">
+                <span className="text-sm text-gray-600">Subtotal</span>
+                <span className="text-sm font-medium text-gray-900">{formatCurrency(invoice.subtotal)}</span>
               </div>
               {(invoice.itemDiscount + invoice.invoiceDiscount) > 0 && (
-                <div className="flex justify-between items-center py-2">
-                  <span className="text-gray-600">Discount</span>
-                  <span className="font-medium text-red-600">-{formatCurrency(invoice.itemDiscount + invoice.invoiceDiscount)}</span>
+                <div className="flex justify-between items-center py-1 border-b border-gray-200">
+                  <span className="text-sm text-gray-600">Discount</span>
+                  <span className="text-sm font-medium text-red-600">-{formatCurrency(invoice.itemDiscount + invoice.invoiceDiscount)}</span>
                 </div>
               )}
               {invoice.cgst > 0 && (
-                <div className="flex justify-between items-center py-2">
-                  <span className="text-gray-600">CGST</span>
-                  <span className="font-medium">{formatCurrency(invoice.cgst)}</span>
+                <div className="flex justify-between items-center py-1 border-b border-gray-200">
+                  <span className="text-sm text-gray-600">CGST</span>
+                  <span className="text-sm font-medium text-gray-900">{formatCurrency(invoice.cgst)}</span>
                 </div>
               )}
               {invoice.sgst > 0 && (
-                <div className="flex justify-between items-center py-2">
-                  <span className="text-gray-600">SGST</span>
-                  <span className="font-medium">{formatCurrency(invoice.sgst)}</span>
+                <div className="flex justify-between items-center py-1 border-b border-gray-200">
+                  <span className="text-sm text-gray-600">SGST</span>
+                  <span className="text-sm font-medium text-gray-900">{formatCurrency(invoice.sgst)}</span>
                 </div>
               )}
               {invoice.igst > 0 && (
-                <div className="flex justify-between items-center py-2">
-                  <span className="text-gray-600">IGST</span>
-                  <span className="font-medium">{formatCurrency(invoice.igst)}</span>
+                <div className="flex justify-between items-center py-1 border-b border-gray-200">
+                  <span className="text-sm text-gray-600">IGST</span>
+                  <span className="text-sm font-medium text-gray-900">{formatCurrency(invoice.igst)}</span>
                 </div>
               )}
-              <div className="border-t-2 border-gray-200 pt-3 flex justify-between items-center">
-                <span className="text-lg font-bold text-gray-900">Grand Total</span>
-                <span className="text-2xl font-bold text-primary-600">{formatCurrency(invoice.grandTotal)}</span>
+              <div className="flex justify-between items-center py-2 border-t-2 border-black mt-2">
+                <span className="text-base font-bold text-gray-900">Grand Total</span>
+                <span className="text-lg font-bold text-black">{formatCurrency(invoice.grandTotal)}</span>
               </div>
             </div>
           </div>
 
           {/* Amount in Words */}
-          <div className="bg-primary-50 rounded-lg p-4 mb-8 print:bg-white print:border">
-            <p className="text-sm text-gray-600 mb-1">Amount in Words:</p>
-            <p className="font-semibold text-gray-900">{invoice.amountInWords || amountInWords(invoice.grandTotal)}</p>
+          <div className="bg-gray-50 border border-gray-200 rounded p-4 mb-8">
+            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Amount in Words</p>
+            <p className="text-sm font-semibold text-gray-900">{invoice.amountInWords || amountInWords(invoice.grandTotal)}</p>
           </div>
 
           {/* Payment Terms */}
           {invoice.paymentTerms && (
             <div className="mb-6">
-              <p className="text-sm font-medium text-gray-700 mb-1">Payment Terms:</p>
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Payment Terms</p>
               <p className="text-sm text-gray-600">{invoice.paymentTerms}</p>
             </div>
           )}
@@ -302,7 +322,7 @@ const InvoiceDetailPage = () => {
           {/* Notes */}
           {invoice.notes && (
             <div className="mb-6">
-              <p className="text-sm font-medium text-gray-700 mb-1">Notes:</p>
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Notes</p>
               <p className="text-sm text-gray-600">{invoice.notes}</p>
             </div>
           )}
@@ -310,49 +330,46 @@ const InvoiceDetailPage = () => {
           {/* Terms */}
           {invoice.termsAndConditions && (
             <div className="mb-8">
-              <p className="text-sm font-medium text-gray-700 mb-2">Terms & Conditions:</p>
-              <div className="bg-gray-50 rounded-lg p-4 print:bg-white print:border">
-                <p className="text-sm text-gray-600 whitespace-pre-line">{invoice.termsAndConditions}</p>
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Terms & Conditions</p>
+              <div className="bg-gray-50 border border-gray-200 rounded p-3">
+                <p className="text-xs text-gray-600 whitespace-pre-line">{invoice.termsAndConditions}</p>
               </div>
             </div>
           )}
 
           {/* Bank Details */}
           {companySettings?.bankDetails?.bankName || companySettings?.bankDetails?.accountNumber || companySettings?.bankDetails?.ifsc ? (
-            <div className="border-t pt-6 mb-8">
-              <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <span className="w-1 h-5 bg-primary-600 rounded"></span>
-                Bank Details
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="border-t border-gray-200 pt-6 mb-8">
+              <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Bank Details</h3>
+              <div className="grid grid-cols-2 gap-4">
                 {companySettings?.bankDetails?.bankName && (
                   <div>
-                    <p className="text-sm text-gray-500">Bank Name</p>
-                    <p className="font-medium text-gray-900">{companySettings.bankDetails.bankName}</p>
+                    <p className="text-xs text-gray-500">Bank Name</p>
+                    <p className="text-sm font-medium text-gray-900">{companySettings.bankDetails.bankName}</p>
                   </div>
                 )}
                 {companySettings?.bankDetails?.accountNumber && (
                   <div>
-                    <p className="text-sm text-gray-500">Account Number</p>
-                    <p className="font-medium text-gray-900">{companySettings.bankDetails.accountNumber}</p>
+                    <p className="text-xs text-gray-500">Account Number</p>
+                    <p className="text-sm font-medium text-gray-900">{companySettings.bankDetails.accountNumber}</p>
                   </div>
                 )}
                 {companySettings?.bankDetails?.ifsc && (
                   <div>
-                    <p className="text-sm text-gray-500">IFSC Code</p>
-                    <p className="font-medium text-gray-900">{companySettings.bankDetails.ifsc}</p>
+                    <p className="text-xs text-gray-500">IFSC Code</p>
+                    <p className="text-sm font-medium text-gray-900">{companySettings.bankDetails.ifsc}</p>
                   </div>
                 )}
                 {companySettings?.bankDetails?.branch && (
                   <div>
-                    <p className="text-sm text-gray-500">Branch</p>
-                    <p className="font-medium text-gray-900">{companySettings.bankDetails.branch}</p>
+                    <p className="text-xs text-gray-500">Branch</p>
+                    <p className="text-sm font-medium text-gray-900">{companySettings.bankDetails.branch}</p>
                   </div>
                 )}
                 {companySettings?.bankDetails?.accountHolderName && (
                   <div>
-                    <p className="text-sm text-gray-500">Account Holder</p>
-                    <p className="font-medium text-gray-900">{companySettings.bankDetails.accountHolderName}</p>
+                    <p className="text-xs text-gray-500">Account Holder</p>
+                    <p className="text-sm font-medium text-gray-900">{companySettings.bankDetails.accountHolderName}</p>
                   </div>
                 )}
               </div>
@@ -360,33 +377,40 @@ const InvoiceDetailPage = () => {
           ) : null}
 
           {/* Signature */}
-          <div className="flex justify-end">
+          <div className="flex justify-end mt-12">
             <div className="text-center">
               {companySettings?.authorizedSignatory?.signatureImage && (
-                <div className="mb-2">
+                <div className="mb-1">
                   <img
                     src={companySettings.authorizedSignatory.signatureImage}
                     alt="Authorized Signature"
-                    className="w-32 h-20 object-contain mx-auto"
+                    className="w-40 h-24 object-contain mx-auto"
                   />
                 </div>
               )}
               {!companySettings?.authorizedSignatory?.signatureImage && (
-                <div className="border-b-2 border-gray-300 w-48 mb-2"></div>
+                <div className="border-b-2 border-black w-48 mb-1"></div>
               )}
-              <p className="text-sm font-medium text-gray-900">
+              <p className="text-sm font-bold text-gray-900">
                 {companySettings?.authorizedSignatory?.name || 'Authorized Signatory'}
               </p>
               {companySettings?.authorizedSignatory?.designation && (
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-gray-600 mt-0.5">
                   {companySettings.authorizedSignatory.designation}
                 </p>
               )}
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-gray-500 mt-0.5">
                 {companySettings?.companyName || 'Datawyn Technologies'}
               </p>
             </div>
           </div>
+        </div>
+
+        {/* Footer */}
+        <div className="px-8 py-4 bg-gray-50 border-t border-gray-200 print:px-6 print:py-3">
+          <p className="text-xs text-gray-500 text-center">
+            This is a computer-generated invoice and does not require a physical signature.
+          </p>
         </div>
       </div>
     </div>
