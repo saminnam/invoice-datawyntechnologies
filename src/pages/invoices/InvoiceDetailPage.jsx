@@ -131,7 +131,7 @@ const InvoiceDetailPage = () => {
       </div>
 
       {/* Invoice Preview */}
-      <div ref={invoiceRef} className="bg-white shadow-lg overflow-hidden print:shadow-none" style={{ maxWidth: '800px', margin: '0 auto' }}>
+      <div ref={invoiceRef} className="bg-white shadow-lg overflow-hidden print:shadow-none">
         {/* Invoice Header */}
         <div className="px-8 py-6 print:px-6 print:py-4 border-b-2 border-black">
           <div className="flex items-start justify-between">
