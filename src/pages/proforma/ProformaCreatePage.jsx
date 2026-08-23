@@ -63,6 +63,7 @@ const ProformaCreatePage = () => {
         ...prev.items,
         {
           product: '',
+          priceRange: 'standard',
           quantity: 1,
           rate: 0,
           discount: 0,
@@ -85,13 +86,14 @@ const ProformaCreatePage = () => {
       const newItems = [...prev.items]
       newItems[index] = { ...newItems[index], [field]: value }
       
-      // If product is selected, auto-fill details
-      if (field === 'product') {
-        const product = products.find(p => p._id === value)
-        if (product) {
+      // If product is selected, auto-fill details based on price range
+      if (field === 'product' || field === 'priceRange') {
+        const product = products.find(p => p._id === newItems[index].product)
+        if (product && product.priceRanges) {
+          const priceRange = newItems[index].priceRange || 'standard'
           newItems[index] = {
             ...newItems[index],
-            rate: Number(product.price) || 0,
+            rate: Number(product.priceRanges[priceRange]) || 0,
             gstRate: 0 // Default to 0 since we removed gstRate from product model
           }
         }
@@ -282,9 +284,24 @@ const ProformaCreatePage = () => {
                         <option value="">Select Product</option>
                         {products.filter(p => p.status === 'active').map(product => (
                           <option key={product._id} value={product._id}>
-                            {product.name} - {formatCurrency(product.price)}
+                            {product.name}
                           </option>
                         ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Price Range
+                      </label>
+                      <select
+                        value={item.priceRange || 'standard'}
+                        onChange={(e) => updateItem(index, 'priceRange', e.target.value)}
+                        className="input"
+                      >
+                        <option value="basic">Basic</option>
+                        <option value="standard">Standard</option>
+                        <option value="premium">Premium</option>
                       </select>
                     </div>
 

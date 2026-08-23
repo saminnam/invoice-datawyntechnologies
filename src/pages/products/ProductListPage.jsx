@@ -115,6 +115,13 @@ const ProductListPage = () => {
                   <td>
                     <div className="flex items-center gap-2">
                       <button
+                        onClick={() => navigate(`/products/${product._id}`)}
+                        className="p-2 hover:bg-gray-100 rounded-lg text-gray-600"
+                        title="View"
+                      >
+                        <FiEye size={18} />
+                      </button>
+                      <button
                         onClick={() => navigate(`/products/${product._id}/edit`)}
                         className="p-2 hover:bg-gray-100 rounded-lg text-gray-600"
                         title="Edit"

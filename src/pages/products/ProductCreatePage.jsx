@@ -10,17 +10,38 @@ const ProductCreatePage = () => {
     name: '',
     type: 'static',
     description: '',
-    price: '',
+    priceRanges: {
+      basic: '',
+      standard: '',
+      premium: ''
+    },
     status: 'active'
   })
   const [errors, setErrors] = useState({})
 
   const handleChange = (e) => {
     const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
     
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }))
+    // Handle nested price ranges
+    if (name.startsWith('priceRanges.')) {
+      const field = name.split('.')[1]
+      setFormData(prev => ({
+        ...prev,
+        priceRanges: {
+          ...prev.priceRanges,
+          [field]: value
+        }
+      }))
+      
+      if (errors[field]) {
+        setErrors(prev => ({ ...prev, [field]: '' }))
+      }
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }))
+      
+      if (errors[name]) {
+        setErrors(prev => ({ ...prev, [name]: '' }))
+      }
     }
   }
 
@@ -31,8 +52,16 @@ const ProductCreatePage = () => {
       newErrors.name = 'Product name is required'
     }
     
-    if (!formData.price || parseFloat(formData.price) < 0) {
-      newErrors.price = 'Valid price is required'
+    if (!formData.priceRanges.basic || parseFloat(formData.priceRanges.basic) < 0) {
+      newErrors.basic = 'Valid basic price is required'
+    }
+    
+    if (!formData.priceRanges.standard || parseFloat(formData.priceRanges.standard) < 0) {
+      newErrors.standard = 'Valid standard price is required'
+    }
+    
+    if (!formData.priceRanges.premium || parseFloat(formData.priceRanges.premium) < 0) {
+      newErrors.premium = 'Valid premium price is required'
     }
     
     setErrors(newErrors)
@@ -48,7 +77,11 @@ const ProductCreatePage = () => {
     try {
       const response = await productService.createProduct({
         ...formData,
-        price: parseFloat(formData.price)
+        priceRanges: {
+          basic: parseFloat(formData.priceRanges.basic),
+          standard: parseFloat(formData.priceRanges.standard),
+          premium: parseFloat(formData.priceRanges.premium)
+        }
       })
       if (response.success) {
         toast.success('Product created successfully')
@@ -106,19 +139,55 @@ const ProductCreatePage = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Price *
+                Basic Price *
               </label>
               <input
                 type="number"
-                name="price"
-                value={formData.price}
+                name="priceRanges.basic"
+                value={formData.priceRanges.basic}
                 onChange={handleChange}
                 step="0.01"
                 min="0"
-                className={`input ${errors.price ? 'border-red-500' : ''}`}
+                className={`input ${errors.basic ? 'border-red-500' : ''}`}
               />
-              {errors.price && (
-                <p className="mt-1 text-sm text-red-600">{errors.price}</p>
+              {errors.basic && (
+                <p className="mt-1 text-sm text-red-600">{errors.basic}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Standard Price *
+              </label>
+              <input
+                type="number"
+                name="priceRanges.standard"
+                value={formData.priceRanges.standard}
+                onChange={handleChange}
+                step="0.01"
+                min="0"
+                className={`input ${errors.standard ? 'border-red-500' : ''}`}
+              />
+              {errors.standard && (
+                <p className="mt-1 text-sm text-red-600">{errors.standard}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Premium Price *
+              </label>
+              <input
+                type="number"
+                name="priceRanges.premium"
+                value={formData.priceRanges.premium}
+                onChange={handleChange}
+                step="0.01"
+                min="0"
+                className={`input ${errors.premium ? 'border-red-500' : ''}`}
+              />
+              {errors.premium && (
+                <p className="mt-1 text-sm text-red-600">{errors.premium}</p>
               )}
             </div>
 

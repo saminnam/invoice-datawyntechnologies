@@ -19,6 +19,7 @@ import CustomerEditPage from '../pages/customers/CustomerEditPage'
 // Product Pages
 import ProductListPage from '../pages/products/ProductListPage'
 import ProductCreatePage from '../pages/products/ProductCreatePage'
+import ProductDetailPage from '../pages/products/ProductDetailPage'
 import ProductEditPage from '../pages/products/ProductEditPage'
 
 // Proforma Invoice Pages
@@ -91,6 +92,11 @@ const AppRoutes = () => {
         <Route path="products/new" element={
           <PermissionRoute requiredPermission="products.create">
             <ProductCreatePage />
+          </PermissionRoute>
+        } />
+        <Route path="products/:id" element={
+          <PermissionRoute requiredPermission="products.view">
+            <ProductDetailPage />
           </PermissionRoute>
         } />
         <Route path="products/:id/edit" element={
