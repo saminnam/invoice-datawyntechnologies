@@ -145,7 +145,7 @@ const DashboardLayout = () => {
         <div className="absolute bottom-0 bg-black left-0 right-0 px-4 py-1 border-t">
           <button
             onClick={handleLogout}
-            className="w-full flex items-center uppercase justify-between px-4 py-3 rounded-lg text-white hover:bg-red-50 transition-colors"
+            className="w-full flex items-center uppercase justify-between px-4 py-3 rounded-lg text-white"
             title={!sidebarOpen ? 'Logout' : ''}
           >
             {sidebarOpen && <span>Logout</span>}
