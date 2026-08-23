@@ -110,13 +110,13 @@ const InvoiceListPage = () => {
                       >
                         <FiEye size={18} />
                       </button>
-                      <button
+                      {/* <button
                         onClick={() => handleDownloadPDF(invoice._id, invoice.invoiceNumber)}
                         className="p-2 hover:bg-gray-100 rounded-lg text-gray-600"
                         title="Download PDF"
                       >
                         <FiDownload size={18} />
-                      </button>
+                      </button> */}
                       <button
                         onClick={() => setShowDeleteModal(invoice._id)}
                         className="p-2 hover:bg-red-100 rounded-lg text-red-600"
