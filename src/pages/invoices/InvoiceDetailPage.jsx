@@ -133,7 +133,7 @@ const InvoiceDetailPage = () => {
       {/* Invoice Preview */}
       <div ref={invoiceRef} className="bg-white shadow-lg overflow-hidden print:shadow-none">
         {/* Invoice Header */}
-        <div className="px-8 py-6 print:px-6 print:py-4 border-b-2 border-black">
+        <div className="px-8 py-6 print:px-6 print:py-4 border-b-2 border-gray-200">
           <div className="flex items-start justify-between">
             <div className="flex items-start gap-4">
               <div className="w-20 h-20 bg-white border border-gray-200 rounded-lg p-2 flex-shrink-0">
@@ -238,7 +238,7 @@ const InvoiceDetailPage = () => {
           <div className="mb-8">
             <table className="w-full border-collapse">
               <thead>
-                <tr className="border-b-2 border-black">
+                <tr className="border-b-2 border-gray-200">
                   <th className="text-left py-3 px-4 text-xs font-bold text-gray-700 uppercase tracking-wider bg-gray-50 border-b">Description</th>
                   <th className="text-center py-3 px-4 text-xs font-bold text-gray-700 uppercase tracking-wider bg-gray-50 border-b w-16">Qty</th>
                   <th className="text-right py-3 px-4 text-xs font-bold text-gray-700 uppercase tracking-wider bg-gray-50 border-b w-24">Rate</th>
@@ -298,7 +298,7 @@ const InvoiceDetailPage = () => {
                   <span className="text-sm font-medium text-gray-900">{formatCurrency(invoice.igst)}</span>
                 </div>
               )}
-              <div className="flex justify-between items-center py-2 border-t-2 border-black mt-2">
+              <div className="flex justify-between items-center py-2 border-t-2 border-gray-200 mt-2">
                 <span className="text-base font-bold text-gray-900">Grand Total</span>
                 <span className="text-lg font-bold text-black">{formatCurrency(invoice.grandTotal)}</span>
               </div>
@@ -389,7 +389,7 @@ const InvoiceDetailPage = () => {
                 </div>
               )}
               {!companySettings?.authorizedSignatory?.signatureImage && (
-                <div className="border-b-2 border-black w-48 mb-1"></div>
+                <div className="border-b-2 border-gray-200 w-48 mb-1"></div>
               )}
               <p className="text-sm font-bold text-gray-900">
                 {companySettings?.authorizedSignatory?.name || 'Authorized Signatory'}
