@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import { useApp } from '../context/AppContext'
 import { useCompany } from '../context/CompanyContext'
 import Breadcrumbs from '../components/Breadcrumbs'
+import WelcomeHeader from '../components/WelcomeHeader'
 import defaultLogo from '../assets/datawyn-logo.png'
 
 const DashboardLayout = () => {
@@ -160,6 +161,10 @@ const DashboardLayout = () => {
           } pt-16 lg:pt-0`}
       >
         <div className="p-4 lg:p-8">
+          <div className="flex justify-end mb-4">
+            <WelcomeHeader />
+          </div>
+          
           <Breadcrumbs />
           <Outlet />
         </div>

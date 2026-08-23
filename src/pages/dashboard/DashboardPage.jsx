@@ -4,11 +4,15 @@ import { useNavigate } from 'react-router-dom'
 import { dashboardService } from '../../services/dashboardService'
 import { formatCurrency } from '../../utils/formatCurrency'
 import StatCard from '../../components/dashboard/StatCard'
+import { useAuth } from '../../context/AuthContext'
 
 const DashboardPage = () => {
   const navigate = useNavigate()
+  const { hasPermission } = useAuth()
   const [stats, setStats] = useState(null)
   const [loading, setLoading] = useState(true)
+  
+  const canViewInvoiceValue = hasPermission('dashboard.view_invoice_value')
 
   useEffect(() => {
     fetchStats()
@@ -45,7 +49,7 @@ const DashboardPage = () => {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className={`grid gap-6 ${canViewInvoiceValue ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4' : 'grid-cols-1 md:grid-cols-3'}`}>
         <StatCard
           title="Total Customers"
           value={stats?.totalCustomers || 0}
@@ -64,12 +68,14 @@ const DashboardPage = () => {
           icon={FiFileText}
           color="purple"
         />
-        <StatCard
-          title="Total Invoice Value"
-          value={formatCurrency(stats?.totalInvoiceValue || 0)}
-          icon={FiTrendingUp}
-          color="orange"
-        />
+        {canViewInvoiceValue && (
+          <StatCard
+            title="Total Invoice Value"
+            value={formatCurrency(stats?.totalInvoiceValue || 0)}
+            icon={FiTrendingUp}
+            color="orange"
+          />
+        )}
       </div>
 
       {/* Quick Actions */}
@@ -83,7 +89,7 @@ const DashboardPage = () => {
             <div className="p-2 bg-primary-100 text-primary-600 rounded-lg">
               <FiPlus size={20} />
             </div>
-            <span className="font-medium">Create Proforma Invoice</span>
+            <span className="font-medium">Create Proforma</span>
           </button>
           <button
             onClick={() => navigate('/customers/new')}
