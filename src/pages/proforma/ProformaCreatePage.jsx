@@ -302,6 +302,7 @@ const ProformaCreatePage = () => {
                         <option value="basic">Basic</option>
                         <option value="standard">Standard</option>
                         <option value="premium">Premium</option>
+                        <option value="custom">Custom</option>
                       </select>
                     </div>
 

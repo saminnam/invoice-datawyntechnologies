@@ -57,6 +57,7 @@ const ProformaEditPage = () => {
           termsAndConditions: invoice.termsAndConditions || '',
           items: invoice.items.map(item => ({
             product: item.product?._id || item.product,
+            priceRange: item.priceRange || 'standard',
             quantity: item.quantity,
             rate: item.rate,
             discount: item.discount || 0,
@@ -84,6 +85,7 @@ const ProformaEditPage = () => {
         ...prev.items,
         {
           product: '',
+          priceRange: 'standard',
           quantity: 1,
           rate: 0,
           discount: 0,
@@ -106,12 +108,14 @@ const ProformaEditPage = () => {
       const newItems = [...prev.items]
       newItems[index] = { ...newItems[index], [field]: value }
       
-      if (field === 'product') {
-        const product = products.find(p => p._id === value)
-        if (product) {
+      // If product is selected, auto-fill details based on price range
+      if (field === 'product' || field === 'priceRange') {
+        const product = products.find(p => p._id === newItems[index].product)
+        if (product && product.priceRanges) {
+          const priceRange = newItems[index].priceRange || 'standard'
           newItems[index] = {
             ...newItems[index],
-            rate: product.price,
+            rate: Number(product.priceRanges[priceRange]) || 0,
             gstRate: 0 // Default to 0 since we removed gstRate from product model
           }
         }
@@ -300,9 +304,25 @@ const ProformaEditPage = () => {
                         <option value="">Select Product</option>
                         {products.filter(p => p.status === 'active').map(product => (
                           <option key={product._id} value={product._id}>
-                            {product.name} - {formatCurrency(product.price)}
+                            {product.name}
                           </option>
                         ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Price Range
+                      </label>
+                      <select
+                        value={item.priceRange || 'standard'}
+                        onChange={(e) => updateItem(index, 'priceRange', e.target.value)}
+                        className="input"
+                      >
+                        <option value="basic">Basic</option>
+                        <option value="standard">Standard</option>
+                        <option value="premium">Premium</option>
+                        <option value="custom">Custom</option>
                       </select>
                     </div>
 

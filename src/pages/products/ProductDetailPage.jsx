@@ -105,7 +105,7 @@ const ProductDetailPage = () => {
       {/* Price Ranges */}
       <div className="card">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Price Ranges</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <div className="p-4 bg-blue-50 rounded-lg">
             <p className="text-sm text-blue-600 font-medium">Basic Price</p>
             <p className="text-2xl font-bold text-blue-900 mt-2">
@@ -122,6 +122,12 @@ const ProductDetailPage = () => {
             <p className="text-sm text-purple-600 font-medium">Premium Price</p>
             <p className="text-2xl font-bold text-purple-900 mt-2">
               {formatCurrency(product.priceRanges?.premium || 0)}
+            </p>
+          </div>
+          <div className="p-4 bg-orange-50 rounded-lg">
+            <p className="text-sm text-orange-600 font-medium">Custom Price</p>
+            <p className="text-2xl font-bold text-orange-900 mt-2">
+              {formatCurrency(product.priceRanges?.custom || 0)}
             </p>
           </div>
         </div>

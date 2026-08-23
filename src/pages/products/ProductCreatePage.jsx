@@ -13,7 +13,8 @@ const ProductCreatePage = () => {
     priceRanges: {
       basic: '',
       standard: '',
-      premium: ''
+      premium: '',
+      custom: ''
     },
     status: 'active'
   })
@@ -64,6 +65,10 @@ const ProductCreatePage = () => {
       newErrors.premium = 'Valid premium price is required'
     }
     
+    if (formData.priceRanges.custom && parseFloat(formData.priceRanges.custom) < 0) {
+      newErrors.custom = 'Custom price cannot be negative'
+    }
+    
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -80,7 +85,8 @@ const ProductCreatePage = () => {
         priceRanges: {
           basic: parseFloat(formData.priceRanges.basic),
           standard: parseFloat(formData.priceRanges.standard),
-          premium: parseFloat(formData.priceRanges.premium)
+          premium: parseFloat(formData.priceRanges.premium),
+          custom: formData.priceRanges.custom ? parseFloat(formData.priceRanges.custom) : undefined
         }
       })
       if (response.success) {
@@ -188,6 +194,24 @@ const ProductCreatePage = () => {
               />
               {errors.premium && (
                 <p className="mt-1 text-sm text-red-600">{errors.premium}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Custom Price
+              </label>
+              <input
+                type="number"
+                name="priceRanges.custom"
+                value={formData.priceRanges.custom}
+                onChange={handleChange}
+                step="0.01"
+                min="0"
+                className={`input ${errors.custom ? 'border-red-500' : ''}`}
+              />
+              {errors.custom && (
+                <p className="mt-1 text-sm text-red-600">{errors.custom}</p>
               )}
             </div>
 

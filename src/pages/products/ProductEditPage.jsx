@@ -15,7 +15,8 @@ const ProductEditPage = () => {
     priceRanges: {
       basic: '',
       standard: '',
-      premium: ''
+      premium: '',
+      custom: ''
     },
     status: 'active'
   })
@@ -38,7 +39,8 @@ const ProductEditPage = () => {
           priceRanges: {
             basic: product.priceRanges?.basic?.toString() || '',
             standard: product.priceRanges?.standard?.toString() || '',
-            premium: product.priceRanges?.premium?.toString() || ''
+            premium: product.priceRanges?.premium?.toString() || '',
+            custom: product.priceRanges?.custom?.toString() || ''
           },
           status: product.status || 'active'
         })
@@ -95,6 +97,10 @@ const ProductEditPage = () => {
       newErrors.premium = 'Valid premium price is required'
     }
     
+    if (formData.priceRanges.custom && parseFloat(formData.priceRanges.custom) < 0) {
+      newErrors.custom = 'Custom price cannot be negative'
+    }
+    
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -111,7 +117,8 @@ const ProductEditPage = () => {
         priceRanges: {
           basic: parseFloat(formData.priceRanges.basic),
           standard: parseFloat(formData.priceRanges.standard),
-          premium: parseFloat(formData.priceRanges.premium)
+          premium: parseFloat(formData.priceRanges.premium),
+          custom: formData.priceRanges.custom ? parseFloat(formData.priceRanges.custom) : undefined
         }
       })
       if (response.success) {
@@ -134,7 +141,7 @@ const ProductEditPage = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Edit Product/Service</h1>
         <p className="text-gray-600">Update product details below</p>
@@ -227,6 +234,24 @@ const ProductEditPage = () => {
               />
               {errors.premium && (
                 <p className="mt-1 text-sm text-red-600">{errors.premium}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Custom Price
+              </label>
+              <input
+                type="number"
+                name="priceRanges.custom"
+                value={formData.priceRanges.custom}
+                onChange={handleChange}
+                step="0.01"
+                min="0"
+                className={`input ${errors.custom ? 'border-red-500' : ''}`}
+              />
+              {errors.custom && (
+                <p className="mt-1 text-sm text-red-600">{errors.custom}</p>
               )}
             </div>
 
