@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { FiArrowLeft, FiDownload, FiPrinter, FiLoader } from 'react-icons/fi'
+import { FiArrowLeft, FiDownload, FiPrinter, FiLoader, FiMail } from 'react-icons/fi'
 import { invoiceService } from '../../services/invoiceService'
 import { formatDate } from '../../utils/dateUtils'
 import { formatCurrency } from '../../utils/formatCurrency'
@@ -17,6 +17,13 @@ const InvoiceDetailPage = () => {
   const [invoice, setInvoice] = useState(null)
   const [loading, setLoading] = useState(true)
   const [generatingPDF, setGeneratingPDF] = useState(false)
+  const [showEmailModal, setShowEmailModal] = useState(false)
+  const [sendingEmail, setSendingEmail] = useState(false)
+  const [emailData, setEmailData] = useState({
+    email: '',
+    emailType: 'customer',
+    message: ''
+  })
   const invoiceRef = useRef(null)
 
   useEffect(() => {
@@ -75,6 +82,38 @@ const InvoiceDetailPage = () => {
     window.print()
   }
 
+  const handleSendEmail = () => {
+    setShowEmailModal(true)
+    setEmailData({
+      email: invoice?.customerSnapshot?.email || '',
+      emailType: 'customer',
+      message: ''
+    })
+  }
+
+  const handleEmailSubmit = async (e) => {
+    e.preventDefault()
+    
+    if (!emailData.email) {
+      toast.error('Please enter an email address')
+      return
+    }
+    
+    setSendingEmail(true)
+    try {
+      const response = await invoiceService.sendInvoiceEmail(id, emailData)
+      if (response.success) {
+        toast.success('Invoice sent successfully')
+        setShowEmailModal(false)
+        fetchInvoice()
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to send email')
+    } finally {
+      setSendingEmail(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -103,6 +142,13 @@ const InvoiceDetailPage = () => {
           Back to Invoices
         </button>
         <div className="flex gap-2">
+          <button
+            onClick={handleSendEmail}
+            className="btn btn-primary flex items-center gap-2"
+          >
+            <FiMail size={20} />
+            Send Email
+          </button>
           <button
             onClick={handleDownloadPDF}
             disabled={generatingPDF}
@@ -242,8 +288,12 @@ const InvoiceDetailPage = () => {
                   <th className="text-left py-3 px-4 text-xs font-bold text-gray-700 uppercase tracking-wider bg-gray-50 border-b">Description</th>
                   <th className="text-center py-3 px-4 text-xs font-bold text-gray-700 uppercase tracking-wider bg-gray-50 border-b w-16">Qty</th>
                   <th className="text-right py-3 px-4 text-xs font-bold text-gray-700 uppercase tracking-wider bg-gray-50 border-b w-24">Rate</th>
-                  <th className="text-center py-3 px-4 text-xs font-bold text-gray-700 uppercase tracking-wider bg-gray-50 border-b w-16">GST %</th>
-                  <th className="text-right py-3 px-4 text-xs font-bold text-gray-700 uppercase tracking-wider bg-gray-50 border-b w-24">Taxable</th>
+                  {invoice.enableGST && (
+                    <>
+                      <th className="text-center py-3 px-4 text-xs font-bold text-gray-700 uppercase tracking-wider bg-gray-50 border-b w-16">GST %</th>
+                      <th className="text-right py-3 px-4 text-xs font-bold text-gray-700 uppercase tracking-wider bg-gray-50 border-b w-24">Taxable</th>
+                    </>
+                  )}
                   <th className="text-right py-3 px-4 text-xs font-bold text-gray-700 uppercase tracking-wider bg-gray-50 border-b w-24">Total</th>
                 </tr>
               </thead>
@@ -258,8 +308,12 @@ const InvoiceDetailPage = () => {
                     </td>
                     <td className="py-3 px-4 text-center text-gray-700 text-sm">{item.quantity}</td>
                     <td className="py-3 px-4 text-right text-gray-700 text-sm">{formatCurrency(item.rate)}</td>
-                    <td className="py-3 px-4 text-center text-gray-700 text-sm">{item.gstRate}%</td>
-                    <td className="py-3 px-4 text-right text-gray-700 text-sm">{formatCurrency(item.taxableAmount)}</td>
+                    {invoice.enableGST && (
+                      <>
+                        <td className="py-3 px-4 text-center text-gray-700 text-sm">{item.gstRate}%</td>
+                        <td className="py-3 px-4 text-right text-gray-700 text-sm">{formatCurrency(item.taxableAmount)}</td>
+                      </>
+                    )}
                     <td className="py-3 px-4 text-right font-semibold text-gray-900 text-sm">{formatCurrency(item.total)}</td>
                   </tr>
                 ))}
@@ -280,23 +334,27 @@ const InvoiceDetailPage = () => {
                   <span className="text-sm font-medium text-red-600">-{formatCurrency(invoice.itemDiscount + invoice.invoiceDiscount)}</span>
                 </div>
               )}
-              {invoice.cgst > 0 && (
-                <div className="flex justify-between items-center py-1 border-b border-gray-200">
-                  <span className="text-sm text-gray-600">CGST</span>
-                  <span className="text-sm font-medium text-gray-900">{formatCurrency(invoice.cgst)}</span>
-                </div>
-              )}
-              {invoice.sgst > 0 && (
-                <div className="flex justify-between items-center py-1 border-b border-gray-200">
-                  <span className="text-sm text-gray-600">SGST</span>
-                  <span className="text-sm font-medium text-gray-900">{formatCurrency(invoice.sgst)}</span>
-                </div>
-              )}
-              {invoice.igst > 0 && (
-                <div className="flex justify-between items-center py-1 border-b border-gray-200">
-                  <span className="text-sm text-gray-600">IGST</span>
-                  <span className="text-sm font-medium text-gray-900">{formatCurrency(invoice.igst)}</span>
-                </div>
+              {invoice.enableGST && (
+                <>
+                  {invoice.cgst > 0 && (
+                    <div className="flex justify-between items-center py-1 border-b border-gray-200">
+                      <span className="text-sm text-gray-600">CGST</span>
+                      <span className="text-sm font-medium text-gray-900">{formatCurrency(invoice.cgst)}</span>
+                    </div>
+                  )}
+                  {invoice.sgst > 0 && (
+                    <div className="flex justify-between items-center py-1 border-b border-gray-200">
+                      <span className="text-sm text-gray-600">SGST</span>
+                      <span className="text-sm font-medium text-gray-900">{formatCurrency(invoice.sgst)}</span>
+                    </div>
+                  )}
+                  {invoice.igst > 0 && (
+                    <div className="flex justify-between items-center py-1 border-b border-gray-200">
+                      <span className="text-sm text-gray-600">IGST</span>
+                      <span className="text-sm font-medium text-gray-900">{formatCurrency(invoice.igst)}</span>
+                    </div>
+                  )}
+                </>
               )}
               <div className="flex justify-between items-center py-2 border-t-2 border-gray-200 mt-2">
                 <span className="text-base font-bold text-gray-900">Grand Total</span>
@@ -413,6 +471,89 @@ const InvoiceDetailPage = () => {
           </p>
         </div>
       </div>
+
+      {/* Email Modal */}
+      {showEmailModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Send Invoice via Email</h3>
+            <form onSubmit={handleEmailSubmit}>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Email Type
+                </label>
+                <select
+                  value={emailData.emailType}
+                  onChange={(e) => {
+                    const newType = e.target.value
+                    setEmailData(prev => ({
+                      ...prev,
+                      emailType: newType,
+                      email: newType === 'customer' ? invoice?.customerSnapshot?.email || '' : prev.email
+                    }))
+                  }}
+                  className="input"
+                >
+                  <option value="customer">Customer Email</option>
+                  <option value="custom">Custom Email</option>
+                </select>
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Recipient Email *
+                </label>
+                <input
+                  type="email"
+                  value={emailData.email}
+                  onChange={(e) => setEmailData(prev => ({ ...prev, email: e.target.value }))}
+                  className="input"
+                  required
+                  placeholder="Enter email address"
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Message (Optional)
+                </label>
+                <textarea
+                  value={emailData.message}
+                  onChange={(e) => setEmailData(prev => ({ ...prev, message: e.target.value }))}
+                  className="input"
+                  rows={3}
+                  placeholder="Add a custom message..."
+                />
+              </div>
+              <div className="flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowEmailModal(false)}
+                  className="btn btn-secondary"
+                  disabled={sendingEmail}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={sendingEmail}
+                  className="btn bg-black text-white flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {sendingEmail ? (
+                    <>
+                      <FiLoader size={20} className="animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <FiMail size={20} />
+                      Send Email
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

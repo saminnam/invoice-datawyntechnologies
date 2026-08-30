@@ -69,4 +69,14 @@ export const invoiceService = {
     const response = await api.delete(`/invoices/${id}`)
     return response.data
   },
+
+  sendProformaEmail: async (id, emailData) => {
+    const response = await api.post(`/proforma/${id}/send-email`, emailData)
+    return response.data
+  },
+
+  sendInvoiceEmail: async (id, emailData) => {
+    const response = await api.post(`/invoices/${id}/send-email`, emailData)
+    return response.data
+  },
 }
