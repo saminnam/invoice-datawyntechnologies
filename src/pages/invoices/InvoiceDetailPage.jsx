@@ -211,10 +211,10 @@ const InvoiceDetailPage = () => {
               </div>
             </div>
             <div className="text-right">
-              <div className="bg-black text-white px-4 py-2 rounded-t-lg">
+              <div className="text-black py-2">
                 <h2 className="text-xl font-bold tracking-wider">TAX INVOICE</h2>
               </div>
-              <div className="bg-gray-100 px-4 py-2 rounded-b-lg border border-gray-200 border-t-0">
+              <div className="py-2 border-gray-200 border-t">
                 <p className="text-sm font-semibold text-gray-900">{invoice.invoiceNumber}</p>
               </div>
             </div>
