@@ -75,8 +75,26 @@ export const invoiceService = {
     return response.data
   },
 
+  sendProformaEmailWithPDF: async (id, formData) => {
+    const response = await api.post(`/proforma/${id}/send-email-pdf`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
+    return response.data
+  },
+
   sendInvoiceEmail: async (id, emailData) => {
     const response = await api.post(`/invoices/${id}/send-email`, emailData)
+    return response.data
+  },
+
+  sendInvoiceEmailWithPDF: async (id, formData) => {
+    const response = await api.post(`/invoices/${id}/send-email-pdf`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
     return response.data
   },
 }

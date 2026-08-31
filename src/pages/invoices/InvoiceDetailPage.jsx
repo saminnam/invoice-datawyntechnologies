@@ -101,13 +101,46 @@ const InvoiceDetailPage = () => {
     
     setSendingEmail(true)
     try {
-      const response = await invoiceService.sendInvoiceEmail(id, emailData)
+      // Generate PDF client-side using html2pdf to match detail page UI
+      if (!invoiceRef.current) {
+        throw new Error('Invoice content not available')
+      }
+      
+      const element = invoiceRef.current
+      const opt = {
+        margin: [10, 10, 10, 10],
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { 
+          scale: 2,
+          useCORS: true,
+          letterRendering: true,
+          logging: false
+        },
+        jsPDF: { 
+          unit: 'mm', 
+          format: 'a4', 
+          orientation: 'portrait' 
+        },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+      }
+      
+      const pdfBlob = await html2pdf().set(opt).from(element).output('blob')
+      const pdfBuffer = await pdfBlob.arrayBuffer()
+      
+      // Send PDF buffer to server for emailing
+      const formData = new FormData()
+      formData.append('pdf', new Blob([pdfBuffer], { type: 'application/pdf' }), `${invoice.invoiceNumber}.pdf`)
+      formData.append('email', emailData.email)
+      formData.append('message', emailData.message || '')
+      
+      const response = await invoiceService.sendInvoiceEmailWithPDF(id, formData)
       if (response.success) {
         toast.success('Invoice sent successfully')
         setShowEmailModal(false)
         fetchInvoice()
       }
     } catch (error) {
+      console.error('Email sending error:', error)
       toast.error(error.response?.data?.message || 'Failed to send email')
     } finally {
       setSendingEmail(false)
