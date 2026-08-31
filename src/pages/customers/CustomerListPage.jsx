@@ -4,6 +4,7 @@ import { FiPlus, FiSearch, FiEdit, FiTrash2, FiEye } from 'react-icons/fi'
 import { customerService } from '../../services/customerService'
 import toast from 'react-hot-toast'
 import { formatDate } from '../../utils/dateUtils'
+import Pagination from '../../components/common/Pagination'
 
 const CustomerListPage = () => {
   const navigate = useNavigate()
@@ -11,17 +12,27 @@ const CustomerListPage = () => {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [showDeleteModal, setShowDeleteModal] = useState(null)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [totalItems, setTotalItems] = useState(0)
+  const itemsPerPage = 10
 
   useEffect(() => {
     fetchCustomers()
-  }, [])
+  }, [currentPage, searchTerm])
 
   const fetchCustomers = async () => {
     setLoading(true)
     try {
-      const response = await customerService.getCustomers()
+      const response = await customerService.getCustomers({
+        page: currentPage,
+        limit: itemsPerPage,
+        search: searchTerm
+      })
       if (response.success) {
         setCustomers(response.data.items || response.data)
+        setTotalPages(response.data.pagination?.pages || 1)
+        setTotalItems(response.data.pagination?.total || 0)
       }
     } catch (error) {
       toast.error('Failed to fetch customers')
@@ -35,6 +46,7 @@ const CustomerListPage = () => {
       const response = await customerService.deleteCustomer(id)
       if (response.success) {
         toast.success('Customer deleted successfully')
+        setCurrentPage(1)
         fetchCustomers()
       }
     } catch (error) {
@@ -44,11 +56,6 @@ const CustomerListPage = () => {
     }
   }
 
-  const filteredCustomers = customers.filter(customer =>
-    customer.companyName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    customer.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    customer.phone?.includes(searchTerm)
-  )
 
   if (loading) {
     return (
@@ -100,8 +107,8 @@ const CustomerListPage = () => {
             </tr>
           </thead>
           <tbody>
-            {filteredCustomers.length > 0 ? (
-              filteredCustomers.map((customer) => (
+            {customers.length > 0 ? (
+              customers.map((customer) => (
                 <tr key={customer._id}>
                   <td className="font-medium">{customer.companyName}</td>
                   <td>{customer.contactPerson || '-'}</td>
@@ -147,6 +154,15 @@ const CustomerListPage = () => {
           </tbody>
         </table>
       </div>
+
+      {/* Pagination */}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+        totalItems={totalItems}
+        itemsPerPage={itemsPerPage}
+      />
 
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (

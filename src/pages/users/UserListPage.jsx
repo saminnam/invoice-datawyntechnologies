@@ -7,6 +7,7 @@ import { permissionService } from '../../services/permissionService'
 import { useAuth } from '../../context/AuthContext'
 import toast from 'react-hot-toast'
 import UserModal from '../../components/users/UserModal'
+import Pagination from '../../components/common/Pagination'
 
 const UserListPage = () => {
   const { hasPermission } = useAuth()
@@ -19,21 +20,27 @@ const UserListPage = () => {
   const [selectedUser, setSelectedUser] = useState(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [modalMode, setModalMode] = useState('create') // 'create' or 'edit'
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [totalItems, setTotalItems] = useState(0)
+  const itemsPerPage = 10
 
   useEffect(() => {
     fetchData()
-  }, [])
+  }, [currentPage, searchTerm])
 
   const fetchData = async () => {
     try {
       const [usersRes, rolesRes, permissionsRes] = await Promise.all([
-        userService.getUsers(),
+        userService.getUsers({ page: currentPage, limit: itemsPerPage, search: searchTerm }),
         roleService.getRoles(),
         permissionService.getPermissions()
       ])
 
       if (usersRes.success) {
         setUsers(usersRes.data?.items || [])
+        setTotalPages(usersRes.data?.pagination?.pages || 1)
+        setTotalItems(usersRes.data?.pagination?.total || 0)
       }
       if (rolesRes.success) {
         setRoles(rolesRes.data)
@@ -80,6 +87,7 @@ const UserListPage = () => {
       const response = await userService.deleteUser(userId)
       if (response.success) {
         toast.success('User deleted successfully')
+        setCurrentPage(1)
         fetchData()
       }
     } catch (error) {
@@ -124,10 +132,6 @@ const UserListPage = () => {
     }
   }
 
-  const filteredUsers = Array.isArray(users) ? users.filter(user =>
-    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase())
-  ) : []
 
   if (loading) {
     return (
@@ -181,14 +185,14 @@ const UserListPage = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredUsers.length === 0 ? (
+              {users.length === 0 ? (
                 <tr>
                   <td colSpan="5" className="text-center py-8 text-gray-500">
                     No users found
                   </td>
                 </tr>
               ) : (
-                filteredUsers.map((user) => (
+                users.map((user) => (
                   <tr key={user._id} className="border-b border-gray-100 hover:bg-gray-50">
                     <td className="py-3 px-4">
                       <div>
@@ -255,6 +259,15 @@ const UserListPage = () => {
           </table>
         </div>
       </div>
+
+      {/* Pagination */}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+        totalItems={totalItems}
+        itemsPerPage={itemsPerPage}
+      />
 
       {/* User Modal */}
       {isModalOpen && (

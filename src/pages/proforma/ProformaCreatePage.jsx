@@ -37,7 +37,7 @@ const ProformaCreatePage = () => {
     try {
       const [customersRes, productsRes, companyRes] = await Promise.all([
         customerService.getCustomers(),
-        productService.getProducts(),
+        productService.getProducts({ limit: 1000 }), // Fetch all products for dropdown
         companyService.getCompanySettings()
       ])
       

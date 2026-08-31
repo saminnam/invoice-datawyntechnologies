@@ -5,6 +5,7 @@ import { productService } from '../../services/productService'
 import toast from 'react-hot-toast'
 import { PRODUCT_TYPE } from '../../config/constants'
 import { formatCurrency } from '../../utils/formatCurrency'
+import Pagination from '../../components/common/Pagination'
 
 const ProductListPage = () => {
   const navigate = useNavigate()
@@ -12,17 +13,27 @@ const ProductListPage = () => {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [showDeleteModal, setShowDeleteModal] = useState(null)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [totalItems, setTotalItems] = useState(0)
+  const itemsPerPage = 10
 
   useEffect(() => {
     fetchProducts()
-  }, [])
+  }, [currentPage, searchTerm])
 
   const fetchProducts = async () => {
     setLoading(true)
     try {
-      const response = await productService.getProducts()
+      const response = await productService.getProducts({
+        page: currentPage,
+        limit: itemsPerPage,
+        search: searchTerm
+      })
       if (response.success) {
         setProducts(response.data.items || response.data)
+        setTotalPages(response.data.pagination?.pages || 1)
+        setTotalItems(response.data.pagination?.total || 0)
       }
     } catch (error) {
       toast.error('Failed to fetch products')
@@ -36,6 +47,7 @@ const ProductListPage = () => {
       const response = await productService.deleteProduct(id)
       if (response.success) {
         toast.success('Product deleted successfully')
+        setCurrentPage(1)
         fetchProducts()
       }
     } catch (error) {
@@ -45,10 +57,6 @@ const ProductListPage = () => {
     }
   }
 
-  const filteredProducts = products.filter(product =>
-    product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.code?.toLowerCase().includes(searchTerm.toLowerCase())
-  )
 
   if (loading) {
     return (
@@ -100,8 +108,8 @@ const ProductListPage = () => {
             </tr>
           </thead>
           <tbody>
-            {filteredProducts.length > 0 ? (
-              filteredProducts.map((product) => (
+            {products.length > 0 ? (
+              products.map((product) => (
                 <tr key={product._id}>
                   <td className="font-medium">{product.code || '-'}</td>
                   <td>{product.name}</td>
@@ -149,6 +157,15 @@ const ProductListPage = () => {
           </tbody>
         </table>
       </div>
+
+      {/* Pagination */}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+        totalItems={totalItems}
+        itemsPerPage={itemsPerPage}
+      />
 
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (

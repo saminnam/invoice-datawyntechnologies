@@ -41,7 +41,7 @@ const ProformaEditPage = () => {
       const [invoiceRes, customersRes, productsRes, companyRes] = await Promise.all([
         invoiceService.getProformaInvoice(id),
         customerService.getCustomers(),
-        productService.getProducts(),
+        productService.getProducts({ limit: 1000 }), // Fetch all products for dropdown
         companyService.getCompanySettings()
       ])
       
