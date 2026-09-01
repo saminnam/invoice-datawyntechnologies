@@ -12,15 +12,26 @@ const ProductListPage = () => {
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('')
   const [showDeleteModal, setShowDeleteModal] = useState(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [totalItems, setTotalItems] = useState(0)
   const itemsPerPage = 10
 
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm)
+      setCurrentPage(1) // Reset to first page when search changes
+    }, 500)
+
+    return () => clearTimeout(timer)
+  }, [searchTerm])
+
   useEffect(() => {
     fetchProducts()
-  }, [currentPage, searchTerm])
+  }, [currentPage, debouncedSearchTerm])
 
   const fetchProducts = async () => {
     setLoading(true)
@@ -28,7 +39,7 @@ const ProductListPage = () => {
       const response = await productService.getProducts({
         page: currentPage,
         limit: itemsPerPage,
-        search: searchTerm
+        search: debouncedSearchTerm
       })
       if (response.success) {
         setProducts(response.data.items || response.data)

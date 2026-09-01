@@ -11,27 +11,40 @@ const InvoiceListPage = () => {
   const navigate = useNavigate()
   const [invoices, setInvoices] = useState([])
   const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('')
   const [showDeleteModal, setShowDeleteModal] = useState(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [totalItems, setTotalItems] = useState(0)
   const itemsPerPage = 10
 
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm)
+      setCurrentPage(1) // Reset to first page when search changes
+    }, 500)
+
+    return () => clearTimeout(timer)
+  }, [searchTerm])
+
   useEffect(() => {
     fetchInvoices()
-  }, [currentPage])
+  }, [currentPage, debouncedSearchTerm])
 
   const fetchInvoices = async () => {
     setLoading(true)
     try {
       const response = await invoiceService.getInvoices({
         page: currentPage,
-        limit: itemsPerPage
+        limit: itemsPerPage,
+        search: debouncedSearchTerm
       })
       if (response.success) {
         setInvoices(response.data.items || response.data)
-        setTotalPages(response.data.pagination?.pages || 1)
-        setTotalItems(response.data.pagination?.total || 0)
+        setTotalPages(response.data.pages || 1)
+        setTotalItems(response.data.total || 0)
       }
     } catch (error) {
       toast.error('Failed to fetch invoices')
@@ -85,6 +98,17 @@ const InvoiceListPage = () => {
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Invoices</h1>
         <p className="text-gray-600">Final invoices converted from proforma invoices</p>
+      </div>
+
+      {/* Search */}
+      <div className="relative">
+        <input
+          type="text"
+          placeholder="Search invoices..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="input pl-10"
+        />
       </div>
 
       {/* Table */}

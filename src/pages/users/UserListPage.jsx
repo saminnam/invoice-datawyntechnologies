@@ -17,6 +17,7 @@ const UserListPage = () => {
   const [permissions, setPermissions] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('')
   const [selectedUser, setSelectedUser] = useState(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [modalMode, setModalMode] = useState('create') // 'create' or 'edit'
@@ -25,14 +26,24 @@ const UserListPage = () => {
   const [totalItems, setTotalItems] = useState(0)
   const itemsPerPage = 10
 
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm)
+      setCurrentPage(1) // Reset to first page when search changes
+    }, 500)
+
+    return () => clearTimeout(timer)
+  }, [searchTerm])
+
   useEffect(() => {
     fetchData()
-  }, [currentPage, searchTerm])
+  }, [currentPage, debouncedSearchTerm])
 
   const fetchData = async () => {
     try {
       const [usersRes, rolesRes, permissionsRes] = await Promise.all([
-        userService.getUsers({ page: currentPage, limit: itemsPerPage, search: searchTerm }),
+        userService.getUsers({ page: currentPage, limit: itemsPerPage, search: debouncedSearchTerm }),
         roleService.getRoles(),
         permissionService.getPermissions()
       ])

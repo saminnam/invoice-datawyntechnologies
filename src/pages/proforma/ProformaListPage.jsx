@@ -13,6 +13,7 @@ const ProformaListPage = () => {
   const [invoices, setInvoices] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [showDeleteModal, setShowDeleteModal] = useState(null)
   const [currentPage, setCurrentPage] = useState(1)
@@ -20,9 +21,19 @@ const ProformaListPage = () => {
   const [totalItems, setTotalItems] = useState(0)
   const itemsPerPage = 10
 
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm)
+      setCurrentPage(1) // Reset to first page when search changes
+    }, 500)
+
+    return () => clearTimeout(timer)
+  }, [searchTerm])
+
   useEffect(() => {
     fetchInvoices()
-  }, [currentPage, searchTerm, statusFilter])
+  }, [currentPage, debouncedSearchTerm, statusFilter])
 
   const fetchInvoices = async () => {
     setLoading(true)
@@ -30,7 +41,7 @@ const ProformaListPage = () => {
       const response = await invoiceService.getProformaInvoices({
         page: currentPage,
         limit: itemsPerPage,
-        search: searchTerm,
+        search: debouncedSearchTerm,
         status: statusFilter
       })
       if (response.success) {
