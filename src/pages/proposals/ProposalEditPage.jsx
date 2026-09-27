@@ -9,6 +9,7 @@ import toast from 'react-hot-toast'
 import { PAYMENT_TERMS, DEFAULT_TERMS } from '../../config/constants'
 import { calculateInvoiceTotals } from '../../utils/calculations'
 import { formatCurrency } from '../../utils/formatCurrency'
+import Modal from '../../components/common/Modal'
 
 const ProposalEditPage = () => {
   const { id } = useParams()
@@ -18,6 +19,8 @@ const ProposalEditPage = () => {
   const [customers, setCustomers] = useState([])
   const [products, setProducts] = useState([])
   const [companySettings, setCompanySettings] = useState(null)
+  const [showTechModal, setShowTechModal] = useState(false)
+  const [newTechnology, setNewTechnology] = useState('')
   
   const [formData, setFormData] = useState({
     customer: '',
@@ -255,12 +258,18 @@ const ProposalEditPage = () => {
   }
 
   const addTechnology = () => {
-    const newTech = prompt('Enter technology name:')
-    if (newTech && newTech.trim()) {
+    setShowTechModal(true)
+    setNewTechnology('')
+  }
+
+  const handleAddTechnology = () => {
+    if (newTechnology && newTechnology.trim()) {
       setFormData(prev => ({
         ...prev,
-        technologyStack: [...prev.technologyStack, newTech.trim()]
+        technologyStack: [...prev.technologyStack, newTechnology.trim()]
       }))
+      setShowTechModal(false)
+      setNewTechnology('')
     }
   }
 
@@ -1097,6 +1106,44 @@ const ProposalEditPage = () => {
           </button>
         </div>
       </form>
+
+      {/* Technology Modal */}
+      <Modal
+        isOpen={showTechModal}
+        onClose={() => setShowTechModal(false)}
+        title="Add Technology"
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Technology Name
+            </label>
+            <input
+              type="text"
+              value={newTechnology}
+              onChange={(e) => setNewTechnology(e.target.value)}
+              className="input"
+              placeholder="e.g., React.js"
+              onKeyPress={(e) => e.key === 'Enter' && handleAddTechnology()}
+            />
+          </div>
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={() => setShowTechModal(false)}
+              className="btn btn-secondary"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleAddTechnology}
+              disabled={!newTechnology.trim()}
+              className="btn btn-primary"
+            >
+              Add
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }
