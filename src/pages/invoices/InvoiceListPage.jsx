@@ -23,7 +23,7 @@ const InvoiceListPage = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm)
-      setCurrentPage(1) // Reset to first page when search changes
+      setCurrentPage(1) // Reset to first page when search
     }, 500)
 
     return () => clearTimeout(timer)
