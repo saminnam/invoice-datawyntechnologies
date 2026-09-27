@@ -25,6 +25,24 @@ export const INVOICE_STATUS_COLORS = {
   converted: 'purple'
 }
 
+export const PROPOSAL_STATUS_LABELS = {
+  draft: 'Draft',
+  sent: 'Sent',
+  viewed: 'Viewed',
+  accepted: 'Accepted',
+  rejected: 'Rejected',
+  expired: 'Expired'
+}
+
+export const PROPOSAL_STATUS_COLORS = {
+  draft: 'gray',
+  sent: 'blue',
+  viewed: 'purple',
+  accepted: 'green',
+  rejected: 'red',
+  expired: 'orange'
+}
+
 export const CUSTOMER_TYPE = {
   INDIVIDUAL: 'individual',
   BUSINESS: 'business'

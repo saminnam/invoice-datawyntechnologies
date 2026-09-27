@@ -28,6 +28,12 @@ import ProformaCreatePage from '../pages/proforma/ProformaCreatePage'
 import ProformaDetailPage from '../pages/proforma/ProformaDetailPage'
 import ProformaEditPage from '../pages/proforma/ProformaEditPage'
 
+// Proposal Pages
+import ProposalListPage from '../pages/proposals/ProposalListPage'
+import ProposalCreatePage from '../pages/proposals/ProposalCreatePage'
+import ProposalDetailPage from '../pages/proposals/ProposalDetailPage'
+import ProposalEditPage from '../pages/proposals/ProposalEditPage'
+
 // Invoice Pages
 import InvoiceListPage from '../pages/invoices/InvoiceListPage'
 import InvoiceDetailPage from '../pages/invoices/InvoiceDetailPage'
@@ -124,6 +130,28 @@ const AppRoutes = () => {
         <Route path="proforma/:id/edit" element={
           <PermissionRoute requiredPermission="proforma.edit">
             <ProformaEditPage />
+          </PermissionRoute>
+        } />
+        
+        {/* Proposal Routes */}
+        <Route path="proposals" element={
+          <PermissionRoute requiredPermission="proposals.view">
+            <ProposalListPage />
+          </PermissionRoute>
+        } />
+        <Route path="proposals/new" element={
+          <PermissionRoute requiredPermission="proposals.create">
+            <ProposalCreatePage />
+          </PermissionRoute>
+        } />
+        <Route path="proposals/:id" element={
+          <PermissionRoute requiredPermission="proposals.view">
+            <ProposalDetailPage />
+          </PermissionRoute>
+        } />
+        <Route path="proposals/:id/edit" element={
+          <PermissionRoute requiredPermission="proposals.edit">
+            <ProposalEditPage />
           </PermissionRoute>
         } />
         
