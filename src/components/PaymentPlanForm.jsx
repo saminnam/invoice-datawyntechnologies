@@ -3,13 +3,23 @@ import { FiPlus, FiTrash2, FiInfo, FiCheckCircle, FiClock, FiAlertCircle } from 
 import { formatCurrency } from '../utils/formatCurrency'
 import { formatDate } from '../utils/dateUtils'
 
-const PaymentPlanForm = ({ totalAmount, invoiceDate, onChange, existingPlan }) => {
+const PaymentPlanForm = ({ totalAmount, invoiceDate, onChange, existingPlan, disableEdit = false }) => {
   const [planType, setPlanType] = useState(existingPlan?.planType || '')
   const [paymentMethod, setPaymentMethod] = useState(existingPlan?.paymentMethod || '')
   const [paymentSchedule, setPaymentSchedule] = useState(existingPlan?.paymentSchedule || [])
   const [emiDetails, setEmiDetails] = useState(existingPlan?.emiDetails || {})
   const [balanceDueDate, setBalanceDueDate] = useState(existingPlan?.balanceDueDate || '')
   const [validationError, setValidationError] = useState('')
+
+  // Extract balanceDueDate from payment schedule for advance_50 plans
+  useEffect(() => {
+    if (existingPlan?.planType === 'advance_50' && existingPlan?.paymentSchedule?.length >= 2) {
+      const balancePayment = existingPlan.paymentSchedule.find(p => p.paymentType === 'balance')
+      if (balancePayment?.dueDate) {
+        setBalanceDueDate(balancePayment.dueDate.split('T')[0])
+      }
+    }
+  }, [existingPlan])
 
   useEffect(() => {
     // Notify parent of changes
@@ -219,8 +229,15 @@ const PaymentPlanForm = ({ totalAmount, invoiceDate, onChange, existingPlan }) =
   return (
     <div className="space-y-6">
       <div className="card">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Payment Plan</h3>
-        
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-900">Payment Plan</h3>
+          {disableEdit && (
+            <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">
+              Payment plan cannot be edited after payments have been made
+            </span>
+          )}
+        </div>
+
         {/* Payment Plan Type */}
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -237,6 +254,7 @@ const PaymentPlanForm = ({ totalAmount, invoiceDate, onChange, existingPlan }) =
               setValidationError('')
             }}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            disabled={disableEdit}
           >
             <option value="">Select Payment Plan</option>
             <option value="full_payment">Full Payment</option>
@@ -275,6 +293,7 @@ const PaymentPlanForm = ({ totalAmount, invoiceDate, onChange, existingPlan }) =
                 value={balanceDueDate}
                 onChange={(e) => setBalanceDueDate(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                disabled={disableEdit}
               />
             </div>
           </div>
@@ -295,6 +314,7 @@ const PaymentPlanForm = ({ totalAmount, invoiceDate, onChange, existingPlan }) =
                   setEmiDetails({})
                 }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                disabled={disableEdit}
               >
                 <option value="">Select Payment Method</option>
                 <option value="fixed_amount">Fixed Amount</option>
@@ -310,13 +330,15 @@ const PaymentPlanForm = ({ totalAmount, invoiceDate, onChange, existingPlan }) =
                   <div key={index} className="border border-gray-200 rounded-lg p-4 space-y-3">
                     <div className="flex justify-between items-start">
                       <h4 className="font-medium text-gray-900">Payment {index + 1}</h4>
-                      <button
-                        type="button"
-                        onClick={() => removePaymentStage(index)}
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        <FiTrash2 size={18} />
-                      </button>
+                      {!disableEdit && (
+                        <button
+                          type="button"
+                          onClick={() => removePaymentStage(index)}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <FiTrash2 size={18} />
+                        </button>
+                      )}
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
@@ -329,6 +351,7 @@ const PaymentPlanForm = ({ totalAmount, invoiceDate, onChange, existingPlan }) =
                           onChange={(e) => updatePaymentStage(index, 'paymentName', e.target.value)}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                           placeholder="e.g., Advance"
+                          disabled={disableEdit}
                         />
                       </div>
                       <div>
@@ -341,6 +364,7 @@ const PaymentPlanForm = ({ totalAmount, invoiceDate, onChange, existingPlan }) =
                           onChange={(e) => updatePaymentStage(index, 'amount', parseFloat(e.target.value) || 0)}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                           placeholder="0"
+                          disabled={disableEdit}
                         />
                       </div>
                       <div>
@@ -352,6 +376,7 @@ const PaymentPlanForm = ({ totalAmount, invoiceDate, onChange, existingPlan }) =
                           value={stage.dueDate}
                           onChange={(e) => updatePaymentStage(index, 'dueDate', e.target.value)}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                          disabled={disableEdit}
                         />
                       </div>
                       <div>
@@ -362,6 +387,7 @@ const PaymentPlanForm = ({ totalAmount, invoiceDate, onChange, existingPlan }) =
                           value={stage.paymentType}
                           onChange={(e) => updatePaymentStage(index, 'paymentType', e.target.value)}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                          disabled={disableEdit}
                         >
                           <option value="milestone">Milestone</option>
                           <option value="advance">Advance</option>
@@ -380,18 +406,21 @@ const PaymentPlanForm = ({ totalAmount, invoiceDate, onChange, existingPlan }) =
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                         rows="2"
                         placeholder="Optional notes for this payment"
+                        disabled={disableEdit}
                       />
                     </div>
                   </div>
                 ))}
-                <button
-                  type="button"
-                  onClick={addPaymentStage}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-primary-500 hover:text-primary-600"
-                >
-                  <FiPlus />
-                  Add Payment Stage
-                </button>
+                {!disableEdit && (
+                  <button
+                    type="button"
+                    onClick={addPaymentStage}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-primary-500 hover:text-primary-600"
+                  >
+                    <FiPlus />
+                    Add Payment Stage
+                  </button>
+                )}
                 <div className="text-sm text-gray-600">
                   <p><strong>Total Scheduled:</strong> ₹{paymentSchedule.reduce((sum, s) => sum + (s.amount || 0), 0).toLocaleString()}</p>
                   <p><strong>Invoice Amount:</strong> ₹{totalAmount?.toLocaleString()}</p>
@@ -406,13 +435,15 @@ const PaymentPlanForm = ({ totalAmount, invoiceDate, onChange, existingPlan }) =
                   <div key={index} className="border border-gray-200 rounded-lg p-4 space-y-3">
                     <div className="flex justify-between items-start">
                       <h4 className="font-medium text-gray-900">Payment {index + 1}</h4>
-                      <button
-                        type="button"
-                        onClick={() => removePaymentStage(index)}
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        <FiTrash2 size={18} />
-                      </button>
+                      {!disableEdit && (
+                        <button
+                          type="button"
+                          onClick={() => removePaymentStage(index)}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <FiTrash2 size={18} />
+                        </button>
+                      )}
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
@@ -425,6 +456,7 @@ const PaymentPlanForm = ({ totalAmount, invoiceDate, onChange, existingPlan }) =
                           onChange={(e) => updatePaymentStage(index, 'paymentName', e.target.value)}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                           placeholder="e.g., Advance"
+                          disabled={disableEdit}
                         />
                       </div>
                       <div>
@@ -439,6 +471,7 @@ const PaymentPlanForm = ({ totalAmount, invoiceDate, onChange, existingPlan }) =
                           placeholder="0"
                           min="0"
                           max="100"
+                          disabled={disableEdit}
                         />
                       </div>
                       <div>
@@ -450,6 +483,7 @@ const PaymentPlanForm = ({ totalAmount, invoiceDate, onChange, existingPlan }) =
                           value={stage.dueDate}
                           onChange={(e) => updatePaymentStage(index, 'dueDate', e.target.value)}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                          disabled={disableEdit}
                         />
                       </div>
                       <div>
@@ -466,14 +500,16 @@ const PaymentPlanForm = ({ totalAmount, invoiceDate, onChange, existingPlan }) =
                     </div>
                   </div>
                 ))}
-                <button
-                  type="button"
-                  onClick={addPaymentStage}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-primary-500 hover:text-primary-600"
-                >
-                  <FiPlus />
-                  Add Payment Stage
-                </button>
+                {!disableEdit && (
+                  <button
+                    type="button"
+                    onClick={addPaymentStage}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-primary-500 hover:text-primary-600"
+                  >
+                    <FiPlus />
+                    Add Payment Stage
+                  </button>
+                )}
                 <div className="text-sm text-gray-600">
                   <p><strong>Total Percentage:</strong> {paymentSchedule.reduce((sum, s) => sum + (s.percentage || 0), 0)}%</p>
                   <p><strong>Total Amount:</strong> ₹{paymentSchedule.reduce((sum, s) => sum + ((totalAmount * (s.percentage || 0)) / 100), 0).toLocaleString()}</p>
@@ -496,6 +532,7 @@ const PaymentPlanForm = ({ totalAmount, invoiceDate, onChange, existingPlan }) =
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                       placeholder="e.g., 6"
                       min="1"
+                      disabled={disableEdit}
                     />
                   </div>
                   <div>
@@ -507,6 +544,7 @@ const PaymentPlanForm = ({ totalAmount, invoiceDate, onChange, existingPlan }) =
                       value={emiDetails.startDate || ''}
                       onChange={(e) => setEmiDetails({ ...emiDetails, startDate: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                      disabled={disableEdit}
                     />
                   </div>
                   <div>
@@ -521,6 +559,7 @@ const PaymentPlanForm = ({ totalAmount, invoiceDate, onChange, existingPlan }) =
                       placeholder="e.g., 5"
                       min="1"
                       max="31"
+                      disabled={disableEdit}
                     />
                   </div>
                   <div>

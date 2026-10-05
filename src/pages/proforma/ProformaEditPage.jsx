@@ -79,32 +79,43 @@ const ProformaEditPage = () => {
             if (paymentPlanRes.success) {
               const plan = paymentPlanRes.data.paymentPlan
               const installments = paymentPlanRes.data.installments
-              
+
+              // Extract balanceDueDate for advance_50 plans
+              let balanceDueDate = ''
+              if (plan.planType === 'advance_50' && installments.length >= 2) {
+                const balancePayment = installments.find(inst => inst.paymentType === 'balance')
+                if (balancePayment?.dueDate) {
+                  balanceDueDate = balancePayment.dueDate.split('T')[0]
+                }
+              }
+
               setExistingPaymentPlan({
                 planType: plan.planType,
                 paymentMethod: plan.paymentMethod,
                 emiDetails: plan.emiDetails,
+                balanceDueDate,
                 paymentSchedule: installments.map(inst => ({
                   paymentName: inst.paymentName,
                   paymentType: inst.paymentType,
                   amount: inst.scheduledAmount,
                   percentage: inst.percentage,
-                  dueDate: inst.dueDate,
+                  dueDate: inst.dueDate ? inst.dueDate.split('T')[0] : '',
                   notes: inst.notes,
                 })),
                 hasPayments: paymentPlanRes.data.summary.totalPaid > 0,
               })
-              
+
               setPaymentPlan({
                 planType: plan.planType,
                 paymentMethod: plan.paymentMethod,
                 emiDetails: plan.emiDetails,
+                balanceDueDate,
                 paymentSchedule: installments.map(inst => ({
                   paymentName: inst.paymentName,
                   paymentType: inst.paymentType,
                   amount: inst.scheduledAmount,
                   percentage: inst.percentage,
-                  dueDate: inst.dueDate,
+                  dueDate: inst.dueDate ? inst.dueDate.split('T')[0] : '',
                   notes: inst.notes,
                 })),
               })
@@ -304,7 +315,7 @@ const ProformaEditPage = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Payment Terms
+                Payment Terms (Legacy)
               </label>
               <select
                 value={formData.paymentTerms}
@@ -314,8 +325,8 @@ const ProformaEditPage = () => {
                 {PAYMENT_TERMS.map(term => (
                   <option key={term} value={term}>{term}</option>
                 ))}
-                <option value="Custom">Custom</option>
               </select>
+              <p className="text-xs text-gray-500 mt-1">Use the Payment Plan section below for advanced payment scheduling</p>
             </div>
 
             <div>
@@ -535,6 +546,15 @@ const ProformaEditPage = () => {
             </div>
           </div>
         </div>
+
+        {/* Payment Plan */}
+        <PaymentPlanForm
+          totalAmount={calculations.finalAmount}
+          invoiceDate={formData.invoiceDate}
+          onChange={setPaymentPlan}
+          existingPlan={existingPaymentPlan}
+          disableEdit={existingPaymentPlan?.hasPayments}
+        />
 
         {/* Actions */}
         <div className="flex justify-end gap-3">
