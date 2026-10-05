@@ -68,6 +68,27 @@ const PaymentDashboard = ({ customerId }) => {
     toast.success('Payment recorded successfully')
   }
 
+  const handleQuickMarkAsPaid = async (installment) => {
+    if (!confirm(`Mark "${installment.paymentName}" as fully paid? Amount: ${formatCurrency(installment.remainingAmount)}`)) {
+      return
+    }
+
+    try {
+      await paymentService.recordPayment({
+        installmentId: installment._id,
+        amount: installment.remainingAmount,
+        paymentMethod: 'cash',
+        paymentDate: new Date().toISOString().split('T')[0],
+        referenceNumber: '',
+        notes: 'Quick mark as paid'
+      })
+      fetchPaymentData()
+      toast.success('Payment marked as paid')
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to mark as paid')
+    }
+  }
+
   const getStatusBadge = (status) => {
     const statusConfig = {
       pending: { bg: 'bg-gray-100', text: 'text-gray-800', icon: <FiClock /> },
@@ -248,7 +269,10 @@ const PaymentDashboard = ({ customerId }) => {
         {activeTab === 'schedule' && (
           <div className="mt-6">
             {installments.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">No installments found</div>
+              <div className="text-center py-8 text-gray-500">
+                <p>No installments found</p>
+                <p className="text-xs text-gray-400 mt-1">Payment plans: {paymentPlans.length}</p>
+              </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
@@ -261,20 +285,21 @@ const PaymentDashboard = ({ customerId }) => {
                       <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Paid</th>
                       <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Remaining</th>
                       <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Status</th>
+                      <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Quick Mark</th>
                       <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Action</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {installments.map((installment) => (
-                      <tr key={installment._id}>
+                      <tr key={installment._id} className={installment.isOverdue ? 'bg-red-50' : ''}>
                         <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
                           {installment.installmentNumber}
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
                           <div className="font-medium">{installment.paymentName}</div>
                           {installment.isOverdue && (
-                            <div className="text-xs text-red-600">
-                              {installment.daysOverdue} days overdue
+                            <div className="text-xs text-red-600 font-medium">
+                              ⚠ {installment.daysOverdue} days overdue
                             </div>
                           )}
                         </td>
@@ -292,6 +317,20 @@ const PaymentDashboard = ({ customerId }) => {
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap text-center">
                           {getStatusBadge(installment.status)}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap text-center">
+                          {installment.status !== 'paid' && (
+                            <input
+                              type="checkbox"
+                              checked={installment.status === 'paid'}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  handleQuickMarkAsPaid(installment)
+                                }
+                              }}
+                              className="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 cursor-pointer"
+                            />
+                          )}
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap text-center">
                           {installment.status !== 'paid' && (
