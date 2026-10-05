@@ -28,13 +28,17 @@ const PaymentDashboard = ({ customerId }) => {
         paymentService.getPaymentHistory(customerId)
       ])
 
+      console.log('Customer ID:', customerId)
       console.log('Payment Summary Response:', summaryRes)
       console.log('Payment History Response:', historyRes)
 
       if (summaryRes && summaryRes.success) {
+        console.log('Summary data:', summaryRes.data)
         setSummary(summaryRes.data.summary)
         setPaymentPlans(summaryRes.data.paymentPlans || [])
         setInstallments(summaryRes.data.installments || [])
+        console.log('Payment Plans:', summaryRes.data.paymentPlans?.length || 0)
+        console.log('Installments:', summaryRes.data.installments?.length || 0)
       } else {
         console.error('Summary fetch failed or no data:', summaryRes)
         // Even if summary fails, try to set empty arrays
