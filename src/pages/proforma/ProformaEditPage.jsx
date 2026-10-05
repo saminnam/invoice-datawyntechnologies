@@ -5,10 +5,12 @@ import { invoiceService } from '../../services/invoiceService'
 import { customerService } from '../../services/customerService'
 import { productService } from '../../services/productService'
 import { companyService } from '../../services/companyService'
+import { paymentService } from '../../services/paymentService'
 import toast from 'react-hot-toast'
 import { PAYMENT_TERMS, DEFAULT_TERMS } from '../../config/constants'
 import { calculateInvoiceTotals } from '../../utils/calculations'
 import { formatCurrency } from '../../utils/formatCurrency'
+import PaymentPlanForm from '../../components/PaymentPlanForm'
 
 const ProformaEditPage = () => {
   const { id } = useParams()
@@ -30,6 +32,9 @@ const ProformaEditPage = () => {
     items: [],
     enableGST: true
   })
+
+  const [paymentPlan, setPaymentPlan] = useState(null)
+  const [existingPaymentPlan, setExistingPaymentPlan] = useState(null)
 
   useEffect(() => {
     fetchInitialData()
@@ -66,6 +71,48 @@ const ProformaEditPage = () => {
           })),
           enableGST: invoice.enableGST !== undefined ? invoice.enableGST : true
         })
+        
+        // Fetch existing payment plan if exists
+        if (invoice.paymentPlan) {
+          try {
+            const paymentPlanRes = await paymentService.getPaymentPlanByInvoice('proforma', id)
+            if (paymentPlanRes.success) {
+              const plan = paymentPlanRes.data.paymentPlan
+              const installments = paymentPlanRes.data.installments
+              
+              setExistingPaymentPlan({
+                planType: plan.planType,
+                paymentMethod: plan.paymentMethod,
+                emiDetails: plan.emiDetails,
+                paymentSchedule: installments.map(inst => ({
+                  paymentName: inst.paymentName,
+                  paymentType: inst.paymentType,
+                  amount: inst.scheduledAmount,
+                  percentage: inst.percentage,
+                  dueDate: inst.dueDate,
+                  notes: inst.notes,
+                })),
+                hasPayments: paymentPlanRes.data.summary.totalPaid > 0,
+              })
+              
+              setPaymentPlan({
+                planType: plan.planType,
+                paymentMethod: plan.paymentMethod,
+                emiDetails: plan.emiDetails,
+                paymentSchedule: installments.map(inst => ({
+                  paymentName: inst.paymentName,
+                  paymentType: inst.paymentType,
+                  amount: inst.scheduledAmount,
+                  percentage: inst.percentage,
+                  dueDate: inst.dueDate,
+                  notes: inst.notes,
+                })),
+              })
+            }
+          } catch (paymentError) {
+            console.error('Failed to load payment plan:', paymentError)
+          }
+        }
       }
       
       if (customersRes.success) setCustomers(customersRes.data.items || customersRes.data)
@@ -142,6 +189,21 @@ const ProformaEditPage = () => {
     try {
       const response = await invoiceService.updateProformaInvoice(id, formData)
       if (response.success) {
+        // Handle payment plan update if needed
+        if (paymentPlan && paymentPlan.planType && !existingPaymentPlan?.hasPayments) {
+          try {
+            await paymentService.updatePaymentPlan(response.data.paymentPlan?._id, {
+              planType: paymentPlan.planType,
+              paymentMethod: paymentPlan.paymentMethod,
+              totalAmount: calculations.finalAmount,
+              paymentSchedule: paymentPlan.paymentSchedule,
+              emiDetails: paymentPlan.emiDetails,
+            })
+          } catch (paymentError) {
+            console.error('Failed to update payment plan:', paymentError)
+          }
+        }
+        
         toast.success('Proforma invoice updated successfully')
         navigate(`/proforma/${id}`)
       }

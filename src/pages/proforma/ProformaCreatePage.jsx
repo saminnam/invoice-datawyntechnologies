@@ -9,6 +9,7 @@ import toast from 'react-hot-toast'
 import { PAYMENT_TERMS, UNITS, DEFAULT_TERMS } from '../../config/constants'
 import { calculateInvoiceTotals } from '../../utils/calculations'
 import { formatCurrency } from '../../utils/formatCurrency'
+import PaymentPlanForm from '../../components/PaymentPlanForm'
 
 const ProformaCreatePage = () => {
   const navigate = useNavigate()
@@ -28,6 +29,8 @@ const ProformaCreatePage = () => {
     items: [],
     enableGST: true
   })
+
+  const [paymentPlan, setPaymentPlan] = useState(null)
 
   useEffect(() => {
     fetchInitialData()
@@ -128,7 +131,11 @@ const ProformaCreatePage = () => {
     
     setLoading(true)
     try {
-      const response = await invoiceService.createProformaInvoice(formData)
+      const submissionData = {
+        ...formData,
+        paymentPlan: paymentPlan
+      }
+      const response = await invoiceService.createProformaInvoice(submissionData)
       if (response.success) {
         toast.success('Proforma invoice created successfully')
         navigate(`/proforma/${response.data._id}`)
@@ -222,7 +229,7 @@ const ProformaCreatePage = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Payment Terms
+                Payment Terms (Legacy)
               </label>
               <select
                 value={formData.paymentTerms}
@@ -232,8 +239,8 @@ const ProformaCreatePage = () => {
                 {PAYMENT_TERMS.map(term => (
                   <option key={term} value={term}>{term}</option>
                 ))}
-                <option value="Custom">Custom</option>
               </select>
+              <p className="text-xs text-gray-500 mt-1">Use the Payment Plan section below for advanced payment scheduling</p>
             </div>
 
             <div>
@@ -453,6 +460,13 @@ const ProformaCreatePage = () => {
             </div>
           </div>
         </div>
+
+        {/* Payment Plan */}
+        <PaymentPlanForm
+          totalAmount={calculations.finalAmount}
+          invoiceDate={formData.invoiceDate}
+          onChange={setPaymentPlan}
+        />
 
         {/* Actions */}
         <div className="flex justify-end gap-3">

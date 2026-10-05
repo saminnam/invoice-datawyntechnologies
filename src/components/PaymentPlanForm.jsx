@@ -1,0 +1,628 @@
+import { useState, useEffect, useMemo } from 'react'
+import { FiPlus, FiTrash2, FiInfo, FiCheckCircle, FiClock, FiAlertCircle } from 'react-icons/fi'
+import { formatCurrency } from '../utils/formatCurrency'
+import { formatDate } from '../utils/dateUtils'
+
+const PaymentPlanForm = ({ totalAmount, invoiceDate, onChange, existingPlan }) => {
+  const [planType, setPlanType] = useState(existingPlan?.planType || '')
+  const [paymentMethod, setPaymentMethod] = useState(existingPlan?.paymentMethod || '')
+  const [paymentSchedule, setPaymentSchedule] = useState(existingPlan?.paymentSchedule || [])
+  const [emiDetails, setEmiDetails] = useState(existingPlan?.emiDetails || {})
+  const [balanceDueDate, setBalanceDueDate] = useState(existingPlan?.balanceDueDate || '')
+  const [validationError, setValidationError] = useState('')
+
+  useEffect(() => {
+    // Notify parent of changes
+    const planData = {
+      planType,
+      paymentMethod,
+      paymentSchedule,
+      emiDetails,
+      balanceDueDate,
+    }
+    onChange(planData)
+  }, [planType, paymentMethod, paymentSchedule, emiDetails, balanceDueDate, onChange])
+
+  const addPaymentStage = () => {
+    setPaymentSchedule([
+      ...paymentSchedule,
+      {
+        paymentName: `Payment ${paymentSchedule.length + 1}`,
+        paymentType: 'milestone',
+        amount: 0,
+        percentage: 0,
+        dueDate: '',
+      }
+    ])
+  }
+
+  const updatePaymentStage = (index, field, value) => {
+    const updated = [...paymentSchedule]
+    updated[index] = { ...updated[index], [field]: value }
+    setPaymentSchedule(updated)
+  }
+
+  const removePaymentStage = (index) => {
+    setPaymentSchedule(paymentSchedule.filter((_, i) => i !== index))
+  }
+
+  const calculateEMI = () => {
+    if (!emiDetails.numberOfMonths || !totalAmount) return 0
+    return Math.floor(totalAmount / emiDetails.numberOfMonths)
+  }
+
+  const validateSchedule = () => {
+    if (!planType) return false
+    
+    if (planType === 'full_payment') {
+      return true
+    }
+    
+    if (planType === 'advance_50') {
+      return true
+    }
+    
+    if (planType === 'custom_fixed') {
+      const totalScheduled = paymentSchedule.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0)
+      if (Math.abs(totalScheduled - totalAmount) > 0.01) {
+        setValidationError(`Total scheduled amount (₹${totalScheduled}) must equal invoice amount (₹${totalAmount})`)
+        return false
+      }
+    }
+    
+    if (planType === 'custom_percentage') {
+      const totalPercentage = paymentSchedule.reduce((sum, item) => sum + (parseFloat(item.percentage) || 0), 0)
+      if (Math.abs(totalPercentage - 100) > 0.01) {
+        setValidationError(`Total percentage (${totalPercentage}%) must equal 100%`)
+        return false
+      }
+    }
+    
+    if (planType === 'emi') {
+      if (!emiDetails.numberOfMonths || emiDetails.numberOfMonths < 1) {
+        setValidationError('Number of months is required')
+        return false
+      }
+    }
+    
+    setValidationError('')
+    return true
+  }
+
+  // Generate payment schedule preview
+  const previewSchedule = useMemo(() => {
+    if (!planType || !totalAmount) return []
+
+    switch (planType) {
+      case 'full_payment':
+        return [{
+          paymentName: 'Full Payment',
+          paymentType: 'other',
+          amount: totalAmount,
+          percentage: 100,
+          dueDate: invoiceDate || new Date(),
+          status: 'pending'
+        }]
+
+      case 'advance_50':
+        const advanceAmount = totalAmount * 0.5
+        return [
+          {
+            paymentName: 'Advance Payment',
+            paymentType: 'advance',
+            amount: advanceAmount,
+            percentage: 50,
+            dueDate: invoiceDate || new Date(),
+            status: 'pending'
+          },
+          {
+            paymentName: 'Remaining Balance',
+            paymentType: 'balance',
+            amount: advanceAmount,
+            percentage: 50,
+            dueDate: balanceDueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+            status: 'pending'
+          }
+        ]
+
+      case 'custom_payment':
+        if (paymentMethod === 'fixed_amount') {
+          return paymentSchedule.map((item, index) => ({
+            paymentName: item.paymentName || `Payment ${index + 1}`,
+            paymentType: item.paymentType || 'milestone',
+            amount: item.amount,
+            percentage: null,
+            dueDate: item.dueDate,
+            status: 'pending'
+          }))
+        }
+
+        if (paymentMethod === 'percentage_based') {
+          return paymentSchedule.map((item, index) => ({
+            paymentName: item.paymentName || `Payment ${index + 1}`,
+            paymentType: item.paymentType || 'milestone',
+            amount: (totalAmount * (item.percentage || 0)) / 100,
+            percentage: item.percentage,
+            dueDate: item.dueDate,
+            status: 'pending'
+          }))
+        }
+
+        if (paymentMethod === 'emi') {
+          const { numberOfMonths, startDate, paymentDay } = emiDetails
+          if (!numberOfMonths || numberOfMonths < 1) return []
+
+          const monthlyAmount = Math.floor(totalAmount / numberOfMonths)
+          const remainder = totalAmount - (monthlyAmount * (numberOfMonths - 1))
+          const start = new Date(startDate || new Date())
+
+          const schedule = []
+          for (let i = 0; i < numberOfMonths; i++) {
+            const dueDate = new Date(start)
+            dueDate.setMonth(dueDate.getMonth() + i)
+
+            if (paymentDay && paymentDay >= 1 && paymentDay <= 31) {
+              dueDate.setDate(paymentDay)
+            }
+
+            const amount = i === numberOfMonths - 1 ? remainder : monthlyAmount
+
+            schedule.push({
+              paymentName: `EMI Installment ${i + 1}`,
+              paymentType: 'emi',
+              amount: amount,
+              percentage: null,
+              dueDate: dueDate,
+              status: 'pending'
+            })
+          }
+
+          return schedule
+        }
+
+        return []
+
+      default:
+        return []
+    }
+  }, [planType, paymentMethod, paymentSchedule, emiDetails, balanceDueDate, totalAmount, invoiceDate])
+
+  // Calculate summary
+  const summary = useMemo(() => {
+    const totalScheduled = previewSchedule.reduce((sum, item) => sum + (item.amount || 0), 0)
+    const totalPaid = 0 // Will be 0 for new plans
+    const remaining = totalScheduled - totalPaid
+
+    return {
+      invoiceAmount: totalAmount,
+      totalScheduled,
+      totalPaid,
+      remaining,
+      isValid: Math.abs(totalScheduled - totalAmount) < 0.01
+    }
+  }, [previewSchedule, totalAmount])
+
+  // Get status icon
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case 'paid':
+        return <FiCheckCircle className="text-green-600" />
+      case 'partial':
+        return <FiClock className="text-yellow-600" />
+      case 'overdue':
+        return <FiAlertCircle className="text-red-600" />
+      default:
+        return <FiClock className="text-gray-400" />
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="card">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Payment Plan</h3>
+        
+        {/* Payment Plan Type */}
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Payment Plan Type
+          </label>
+          <select
+            value={planType}
+            onChange={(e) => {
+              setPlanType(e.target.value)
+              setPaymentMethod('')
+              setPaymentSchedule([])
+              setEmiDetails({})
+              setBalanceDueDate('')
+              setValidationError('')
+            }}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+          >
+            <option value="">Select Payment Plan</option>
+            <option value="full_payment">Full Payment</option>
+            <option value="advance_50">50% Advance</option>
+            <option value="custom_payment">Custom Payment Plan</option>
+          </select>
+        </div>
+
+        {/* Full Payment */}
+        {planType === 'full_payment' && (
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
+              <FiInfo />
+              <span>Full payment of ₹{totalAmount?.toLocaleString()} will be due on invoice date</span>
+            </div>
+            <div className="text-sm">
+              <p><strong>Payment 1:</strong> ₹{totalAmount?.toLocaleString()}</p>
+              <p><strong>Due Date:</strong> {invoiceDate ? new Date(invoiceDate).toLocaleDateString() : 'Invoice Date'}</p>
+            </div>
+          </div>
+        )}
+
+        {/* 50% Advance */}
+        {planType === 'advance_50' && (
+          <div className="bg-gray-50 p-4 rounded-lg space-y-3">
+            <div className="text-sm">
+              <p><strong>Advance Payment:</strong> ₹{(totalAmount * 0.5).toLocaleString()}</p>
+              <p><strong>Remaining Balance:</strong> ₹{(totalAmount * 0.5).toLocaleString()}</p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Balance Due Date
+              </label>
+              <input
+                type="date"
+                value={balanceDueDate}
+                onChange={(e) => setBalanceDueDate(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Custom Payment Plan */}
+        {planType === 'custom_payment' && (
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Payment Method
+              </label>
+              <select
+                value={paymentMethod}
+                onChange={(e) => {
+                  setPaymentMethod(e.target.value)
+                  setPaymentSchedule([])
+                  setEmiDetails({})
+                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+              >
+                <option value="">Select Payment Method</option>
+                <option value="fixed_amount">Fixed Amount</option>
+                <option value="percentage_based">Percentage-Based Payment</option>
+                <option value="emi">EMI</option>
+              </select>
+            </div>
+
+            {/* Fixed Amount */}
+            {paymentMethod === 'fixed_amount' && (
+              <div className="space-y-4">
+                {paymentSchedule.map((stage, index) => (
+                  <div key={index} className="border border-gray-200 rounded-lg p-4 space-y-3">
+                    <div className="flex justify-between items-start">
+                      <h4 className="font-medium text-gray-900">Payment {index + 1}</h4>
+                      <button
+                        type="button"
+                        onClick={() => removePaymentStage(index)}
+                        className="text-red-600 hover:text-red-700"
+                      >
+                        <FiTrash2 size={18} />
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Payment Name
+                        </label>
+                        <input
+                          type="text"
+                          value={stage.paymentName}
+                          onChange={(e) => updatePaymentStage(index, 'paymentName', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                          placeholder="e.g., Advance"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Amount (₹)
+                        </label>
+                        <input
+                          type="number"
+                          value={stage.amount}
+                          onChange={(e) => updatePaymentStage(index, 'amount', parseFloat(e.target.value) || 0)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                          placeholder="0"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Due Date
+                        </label>
+                        <input
+                          type="date"
+                          value={stage.dueDate}
+                          onChange={(e) => updatePaymentStage(index, 'dueDate', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Payment Type
+                        </label>
+                        <select
+                          value={stage.paymentType}
+                          onChange={(e) => updatePaymentStage(index, 'paymentType', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                        >
+                          <option value="milestone">Milestone</option>
+                          <option value="advance">Advance</option>
+                          <option value="balance">Balance</option>
+                          <option value="other">Other</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Notes (Optional)
+                      </label>
+                      <textarea
+                        value={stage.notes || ''}
+                        onChange={(e) => updatePaymentStage(index, 'notes', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                        rows="2"
+                        placeholder="Optional notes for this payment"
+                      />
+                    </div>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={addPaymentStage}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-primary-500 hover:text-primary-600"
+                >
+                  <FiPlus />
+                  Add Payment Stage
+                </button>
+                <div className="text-sm text-gray-600">
+                  <p><strong>Total Scheduled:</strong> ₹{paymentSchedule.reduce((sum, s) => sum + (s.amount || 0), 0).toLocaleString()}</p>
+                  <p><strong>Invoice Amount:</strong> ₹{totalAmount?.toLocaleString()}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Percentage-Based */}
+            {paymentMethod === 'percentage_based' && (
+              <div className="space-y-4">
+                {paymentSchedule.map((stage, index) => (
+                  <div key={index} className="border border-gray-200 rounded-lg p-4 space-y-3">
+                    <div className="flex justify-between items-start">
+                      <h4 className="font-medium text-gray-900">Payment {index + 1}</h4>
+                      <button
+                        type="button"
+                        onClick={() => removePaymentStage(index)}
+                        className="text-red-600 hover:text-red-700"
+                      >
+                        <FiTrash2 size={18} />
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Payment Name
+                        </label>
+                        <input
+                          type="text"
+                          value={stage.paymentName}
+                          onChange={(e) => updatePaymentStage(index, 'paymentName', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                          placeholder="e.g., Advance"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Percentage (%)
+                        </label>
+                        <input
+                          type="number"
+                          value={stage.percentage}
+                          onChange={(e) => updatePaymentStage(index, 'percentage', parseFloat(e.target.value) || 0)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                          placeholder="0"
+                          min="0"
+                          max="100"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Due Date
+                        </label>
+                        <input
+                          type="date"
+                          value={stage.dueDate}
+                          onChange={(e) => updatePaymentStage(index, 'dueDate', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Calculated Amount
+                        </label>
+                        <input
+                          type="text"
+                          value={`₹${((totalAmount * (stage.percentage || 0)) / 100).toLocaleString()}`}
+                          disabled
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={addPaymentStage}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-primary-500 hover:text-primary-600"
+                >
+                  <FiPlus />
+                  Add Payment Stage
+                </button>
+                <div className="text-sm text-gray-600">
+                  <p><strong>Total Percentage:</strong> {paymentSchedule.reduce((sum, s) => sum + (s.percentage || 0), 0)}%</p>
+                  <p><strong>Total Amount:</strong> ₹{paymentSchedule.reduce((sum, s) => sum + ((totalAmount * (s.percentage || 0)) / 100), 0).toLocaleString()}</p>
+                </div>
+              </div>
+            )}
+
+            {/* EMI */}
+            {paymentMethod === 'emi' && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Number of Months
+                    </label>
+                    <input
+                      type="number"
+                      value={emiDetails.numberOfMonths || ''}
+                      onChange={(e) => setEmiDetails({ ...emiDetails, numberOfMonths: parseInt(e.target.value) || 0 })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                      placeholder="e.g., 6"
+                      min="1"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Start Date
+                    </label>
+                    <input
+                      type="date"
+                      value={emiDetails.startDate || ''}
+                      onChange={(e) => setEmiDetails({ ...emiDetails, startDate: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Payment Day (1-31)
+                    </label>
+                    <input
+                      type="number"
+                      value={emiDetails.paymentDay || ''}
+                      onChange={(e) => setEmiDetails({ ...emiDetails, paymentDay: parseInt(e.target.value) || 0 })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                      placeholder="e.g., 5"
+                      min="1"
+                      max="31"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Monthly EMI
+                    </label>
+                    <input
+                      type="text"
+                      value={`₹${calculateEMI().toLocaleString()}`}
+                      disabled
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Validation Error */}
+        {validationError && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+            {validationError}
+          </div>
+        )}
+
+        {/* Payment Schedule Preview */}
+        {previewSchedule.length > 0 && (
+          <div className="card bg-gray-50">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Payment Schedule Preview</h3>
+            
+            {/* Summary */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+              <div className="bg-white p-4 rounded-lg border">
+                <p className="text-sm text-gray-600">Invoice Amount</p>
+                <p className="text-lg font-bold text-gray-900">{formatCurrency(summary.invoiceAmount)}</p>
+              </div>
+              <div className="bg-white p-4 rounded-lg border">
+                <p className="text-sm text-gray-600">Total Scheduled</p>
+                <p className="text-lg font-bold text-gray-900">{formatCurrency(summary.totalScheduled)}</p>
+              </div>
+              <div className="bg-white p-4 rounded-lg border">
+                <p className="text-sm text-gray-600">Paid</p>
+                <p className="text-lg font-bold text-green-600">{formatCurrency(summary.totalPaid)}</p>
+              </div>
+              <div className="bg-white p-4 rounded-lg border">
+                <p className="text-sm text-gray-600">Remaining</p>
+                <p className="text-lg font-bold text-orange-600">{formatCurrency(summary.remaining)}</p>
+              </div>
+            </div>
+
+            {/* Validation Status */}
+            {!summary.isValid && (
+              <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded-lg mb-4">
+                ⚠️ Total scheduled amount ({formatCurrency(summary.totalScheduled)}) does not match invoice amount ({formatCurrency(summary.invoiceAmount)})
+              </div>
+            )}
+
+            {/* Schedule Table */}
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead>
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Due Date</th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {previewSchedule.map((payment, index) => (
+                    <tr key={index}>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">{index + 1}</td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                        <div className="font-medium">{payment.paymentName}</div>
+                        {payment.percentage && (
+                          <div className="text-xs text-gray-500">{payment.percentage}%</div>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                        {payment.dueDate ? formatDate(payment.dueDate) : '-'}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 text-right font-medium">
+                        {formatCurrency(payment.amount)}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          {getStatusIcon(payment.status)}
+                          <span className="text-sm capitalize">{payment.status}</span>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+export default PaymentPlanForm
