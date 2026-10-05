@@ -28,17 +28,34 @@ const PaymentDashboard = ({ customerId }) => {
         paymentService.getPaymentHistory(customerId)
       ])
 
-      if (summaryRes.success) {
+      console.log('Payment Summary Response:', summaryRes)
+      console.log('Payment History Response:', historyRes)
+
+      if (summaryRes && summaryRes.success) {
         setSummary(summaryRes.data.summary)
-        setPaymentPlans(summaryRes.data.paymentPlans)
-        setInstallments(summaryRes.data.installments)
+        setPaymentPlans(summaryRes.data.paymentPlans || [])
+        setInstallments(summaryRes.data.installments || [])
+      } else {
+        console.error('Summary fetch failed or no data:', summaryRes)
+        // Even if summary fails, try to set empty arrays
+        setSummary(null)
+        setPaymentPlans(summaryRes?.data?.paymentPlans || [])
+        setInstallments(summaryRes?.data?.installments || [])
       }
 
-      if (historyRes.success) {
-        setTransactions(historyRes.data)
+      if (historyRes && historyRes.success) {
+        setTransactions(historyRes.data || [])
+      } else {
+        console.error('History fetch failed:', historyRes)
+        setTransactions([])
       }
     } catch (error) {
+      console.error('Error fetching payment data:', error)
       toast.error('Failed to fetch payment data')
+      setSummary(null)
+      setPaymentPlans([])
+      setInstallments([])
+      setTransactions([])
     } finally {
       setLoading(false)
     }
@@ -70,8 +87,8 @@ const PaymentDashboard = ({ customerId }) => {
   }
 
   const getProgressPercentage = () => {
-    if (!summary || summary.totalInvoiceAmount === 0) return 0
-    return Math.round((summary.totalPaid / summary.totalInvoiceAmount) * 100)
+    if (!displaySummary || displaySummary.totalInvoiceAmount === 0) return 0
+    return Math.round((displaySummary.totalPaid / displaySummary.totalInvoiceAmount) * 100)
   }
 
   if (loading) {
@@ -82,16 +99,29 @@ const PaymentDashboard = ({ customerId }) => {
     )
   }
 
-  if (!summary || paymentPlans.length === 0) {
+  if (paymentPlans.length === 0) {
     return (
       <div className="card">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Payment Schedule</h3>
         <div className="text-center py-12">
           <FiDollarSign className="mx-auto h-12 w-12 text-gray-400" />
           <p className="mt-2 text-sm text-gray-500">No payment plans found for this customer</p>
+          <p className="text-xs text-gray-400 mt-1">Create a proforma invoice with a payment plan to get started</p>
         </div>
       </div>
     )
+  }
+
+  // Use summary if available, otherwise calculate from payment plans
+  const displaySummary = summary || {
+    totalInvoiceAmount: paymentPlans.reduce((sum, p) => sum + (p.totalAmount || 0), 0),
+    totalPaid: paymentPlans.reduce((sum, p) => sum + (p.totalPaid || 0), 0),
+    totalRemaining: paymentPlans.reduce((sum, p) => sum + (p.remainingAmount || 0), 0),
+    pendingInstallments: installments.filter(inst => inst.status === 'pending').length,
+    paidInstallments: installments.filter(inst => inst.status === 'paid').length,
+    overdueInstallments: installments.filter(inst => inst.isOverdue).length,
+    nextPayment: installments.find(inst => inst.status === 'pending' && !inst.isOverdue),
+    progressPercentage: 0
   }
 
   return (
@@ -102,7 +132,7 @@ const PaymentDashboard = ({ customerId }) => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Invoice Amount</p>
-              <p className="text-2xl font-bold text-gray-900">{formatCurrency(summary.totalInvoiceAmount)}</p>
+              <p className="text-2xl font-bold text-gray-900">{formatCurrency(displaySummary.totalInvoiceAmount)}</p>
             </div>
             <FiDollarSign className="h-8 w-8 text-blue-600" />
           </div>
@@ -112,7 +142,7 @@ const PaymentDashboard = ({ customerId }) => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Total Paid</p>
-              <p className="text-2xl font-bold text-green-600">{formatCurrency(summary.totalPaid)}</p>
+              <p className="text-2xl font-bold text-green-600">{formatCurrency(displaySummary.totalPaid)}</p>
             </div>
             <FiArrowUp className="h-8 w-8 text-green-600" />
           </div>
@@ -122,7 +152,7 @@ const PaymentDashboard = ({ customerId }) => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Remaining</p>
-              <p className="text-2xl font-bold text-orange-600">{formatCurrency(summary.totalRemaining)}</p>
+              <p className="text-2xl font-bold text-orange-600">{formatCurrency(displaySummary.totalRemaining)}</p>
             </div>
             <FiArrowDown className="h-8 w-8 text-orange-600" />
           </div>
@@ -152,8 +182,8 @@ const PaymentDashboard = ({ customerId }) => {
           />
         </div>
         <div className="flex justify-between mt-2 text-xs text-gray-600">
-          <span>{formatCurrency(summary.totalPaid)} Paid</span>
-          <span>{formatCurrency(summary.totalRemaining)} Remaining</span>
+          <span>{formatCurrency(displaySummary.totalPaid)} Paid</span>
+          <span>{formatCurrency(displaySummary.totalRemaining)} Remaining</span>
         </div>
       </div>
 
@@ -162,28 +192,28 @@ const PaymentDashboard = ({ customerId }) => {
         <div className="card bg-gray-50">
           <p className="text-sm text-gray-600">Next Payment</p>
           <p className="text-lg font-bold text-gray-900">
-            {summary.nextPayment ? formatCurrency(summary.nextPayment.scheduledAmount) : '-'}
+            {displaySummary.nextPayment ? formatCurrency(displaySummary.nextPayment.scheduledAmount) : '-'}
           </p>
-          {summary.nextPayment && (
+          {displaySummary.nextPayment && (
             <p className="text-xs text-gray-500">
-              Due: {formatDate(summary.nextPayment.dueDate)}
+              Due: {formatDate(displaySummary.nextPayment.dueDate)}
             </p>
           )}
         </div>
 
         <div className="card bg-gray-50">
           <p className="text-sm text-gray-600">Paid Installments</p>
-          <p className="text-lg font-bold text-green-600">{summary.paidInstallments}</p>
+          <p className="text-lg font-bold text-green-600">{displaySummary.paidInstallments}</p>
         </div>
 
         <div className="card bg-gray-50">
           <p className="text-sm text-gray-600">Pending Installments</p>
-          <p className="text-lg font-bold text-yellow-600">{summary.pendingInstallments}</p>
+          <p className="text-lg font-bold text-yellow-600">{displaySummary.pendingInstallments}</p>
         </div>
 
         <div className="card bg-gray-50">
           <p className="text-sm text-gray-600">Overdue</p>
-          <p className="text-lg font-bold text-red-600">{summary.overdueInstallments}</p>
+          <p className="text-lg font-bold text-red-600">{displaySummary.overdueInstallments}</p>
         </div>
       </div>
 
