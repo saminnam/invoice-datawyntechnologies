@@ -71,9 +71,12 @@ const PaymentListPage = () => {
         setShowDeleteModal(false)
         setSelectedPlan(null)
         fetchPaymentPlans()
+      } else {
+        toast.error(response.message || 'Failed to delete payment plan')
       }
     } catch (error) {
-      toast.error('Failed to delete payment plan')
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to delete payment plan'
+      toast.error(errorMessage)
     }
   }
 
@@ -189,13 +192,23 @@ const PaymentListPage = () => {
                         >
                           <FiEye size={18} />
                         </button>
-                        <button
-                          onClick={() => handleDelete(plan)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          title="Delete"
-                        >
-                          <FiTrash2 size={18} />
-                        </button>
+                        {plan.totalPaid === 0 ? (
+                          <button
+                            onClick={() => handleDelete(plan)}
+                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Delete"
+                          >
+                            <FiTrash2 size={18} />
+                          </button>
+                        ) : (
+                          <button
+                            disabled
+                            className="p-2 text-gray-400 cursor-not-allowed"
+                            title="Cannot delete payment plan with payments"
+                          >
+                            <FiTrash2 size={18} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
