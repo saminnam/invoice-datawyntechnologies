@@ -33,9 +33,11 @@ const PaymentPlanForm = ({ totalAmount, invoiceDate, onChange, existingPlan, dis
 
     // Only send if we have a valid plan type and the required data
     if (planType) {
+      console.log('PaymentPlanForm - sending data to parent:', planData)
       onChange(planData)
     } else {
       // Send null if no plan type selected
+      console.log('PaymentPlanForm - sending null to parent (no plan type)')
       onChange(null)
     }
   }, [planType, paymentMethod, paymentSchedule, emiDetails, balanceDueDate, onChange])
@@ -253,6 +255,7 @@ const PaymentPlanForm = ({ totalAmount, invoiceDate, onChange, existingPlan, dis
           <select
             value={planType}
             onChange={(e) => {
+              console.log('PaymentPlanForm - planType changed to:', e.target.value)
               setPlanType(e.target.value)
               setPaymentMethod('')
               setPaymentSchedule([])

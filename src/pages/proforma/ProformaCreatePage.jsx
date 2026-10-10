@@ -32,6 +32,11 @@ const ProformaCreatePage = () => {
 
   const [paymentPlan, setPaymentPlan] = useState(null)
 
+  // Debug payment plan changes
+  useEffect(() => {
+    console.log('ProformaCreatePage - paymentPlan state changed:', paymentPlan)
+  }, [paymentPlan])
+
   useEffect(() => {
     fetchInitialData()
   }, [])
@@ -476,7 +481,10 @@ const ProformaCreatePage = () => {
         <PaymentPlanForm
           totalAmount={calculations.finalAmount}
           invoiceDate={formData.invoiceDate}
-          onChange={setPaymentPlan}
+          onChange={(data) => {
+            console.log('ProformaCreatePage - received payment plan data:', data)
+            setPaymentPlan(data)
+          }}
         />
 
         {/* Actions */}
