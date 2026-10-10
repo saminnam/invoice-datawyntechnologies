@@ -13,6 +13,12 @@ export const paymentService = {
     return response.data
   },
 
+  // Get All Payment Plans
+  getAllPaymentPlans: async () => {
+    const response = await api.get('/payments')
+    return response.data
+  },
+
   // Record Payment
   recordPayment: async (data) => {
     const response = await api.post('/payments/record', data)

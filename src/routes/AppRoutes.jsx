@@ -41,6 +41,9 @@ import InvoiceDetailPage from '../pages/invoices/InvoiceDetailPage'
 // Settings Pages
 import CompanySettingsPage from '../pages/settings/CompanySettingsPage'
 
+// Payment Pages
+import PaymentListPage from '../pages/payments/PaymentListPage'
+
 // User Management Pages
 import UserListPage from '../pages/users/UserListPage'
 import RoleListPage from '../pages/users/RoleListPage'
@@ -166,7 +169,14 @@ const AppRoutes = () => {
             <InvoiceDetailPage />
           </PermissionRoute>
         } />
-        
+
+        {/* Payment Routes */}
+        <Route path="payments" element={
+          <PermissionRoute requiredPermission="payment.view">
+            <PaymentListPage />
+          </PermissionRoute>
+        } />
+
         {/* Settings Routes */}
         <Route path="settings/company" element={
           <PermissionRoute requiredPermission="settings.view">
