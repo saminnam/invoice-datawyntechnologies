@@ -118,29 +118,40 @@ const ProformaCreatePage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    
+
     if (!formData.customer) {
       toast.error('Please select a customer')
       return
     }
-    
+
     if (formData.items.length === 0) {
       toast.error('Please add at least one item')
       return
     }
-    
+
     setLoading(true)
     try {
       const submissionData = {
         ...formData,
-        paymentPlan: paymentPlan
+        // Only include paymentPlan if it has a planType
+        ...(paymentPlan && paymentPlan.planType ? { paymentPlan } : {})
       }
+
+      console.log('Submitting proforma invoice with data:', {
+        hasPaymentPlan: !!paymentPlan,
+        planType: paymentPlan?.planType,
+        paymentMethod: paymentPlan?.paymentMethod,
+        hasSchedule: !!paymentPlan?.paymentSchedule,
+        scheduleLength: paymentPlan?.paymentSchedule?.length
+      })
+
       const response = await invoiceService.createProformaInvoice(submissionData)
       if (response.success) {
         toast.success('Proforma invoice created successfully')
         navigate(`/proforma/${response.data._id}`)
       }
     } catch (error) {
+      console.error('Error creating proforma invoice:', error)
       toast.error(error.response?.data?.message || 'Failed to create invoice')
     } finally {
       setLoading(false)

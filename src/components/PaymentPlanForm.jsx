@@ -30,7 +30,14 @@ const PaymentPlanForm = ({ totalAmount, invoiceDate, onChange, existingPlan, dis
       emiDetails,
       balanceDueDate,
     }
-    onChange(planData)
+
+    // Only send if we have a valid plan type and the required data
+    if (planType) {
+      onChange(planData)
+    } else {
+      // Send null if no plan type selected
+      onChange(null)
+    }
   }, [planType, paymentMethod, paymentSchedule, emiDetails, balanceDueDate, onChange])
 
   const addPaymentStage = () => {
