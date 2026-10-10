@@ -185,36 +185,27 @@ const ProformaEditPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    
+
     if (!formData.customer) {
       toast.error('Please select a customer')
       return
     }
-    
+
     if (formData.items.length === 0) {
       toast.error('Please add at least one item')
       return
     }
-    
+
     setSaving(true)
     try {
-      const response = await invoiceService.updateProformaInvoice(id, formData)
+      // Include payment plan data in the update request
+      const updateData = {
+        ...formData,
+        ...(paymentPlan && paymentPlan.planType && !existingPaymentPlan?.hasPayments ? { paymentPlan } : {})
+      }
+
+      const response = await invoiceService.updateProformaInvoice(id, updateData)
       if (response.success) {
-        // Handle payment plan update if needed
-        if (paymentPlan && paymentPlan.planType && !existingPaymentPlan?.hasPayments) {
-          try {
-            await paymentService.updatePaymentPlan(response.data.paymentPlan?._id, {
-              planType: paymentPlan.planType,
-              paymentMethod: paymentPlan.paymentMethod,
-              totalAmount: calculations.finalAmount,
-              paymentSchedule: paymentPlan.paymentSchedule,
-              emiDetails: paymentPlan.emiDetails,
-            })
-          } catch (paymentError) {
-            console.error('Failed to update payment plan:', paymentError)
-          }
-        }
-        
         toast.success('Proforma invoice updated successfully')
         navigate(`/proforma/${id}`)
       }
