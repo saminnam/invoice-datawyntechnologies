@@ -142,13 +142,13 @@ const ProformaCreatePage = () => {
         ...(paymentPlan && paymentPlan.planType ? { paymentPlan } : {})
       }
 
-      console.log('Submitting proforma invoice with data:', {
-        hasPaymentPlan: !!paymentPlan,
-        planType: paymentPlan?.planType,
-        paymentMethod: paymentPlan?.paymentMethod,
-        hasSchedule: !!paymentPlan?.paymentSchedule,
-        scheduleLength: paymentPlan?.paymentSchedule?.length
-      })
+      // console.log('Submitting proforma invoice with data:', {
+      //   hasPaymentPlan: !!paymentPlan,
+      //   planType: paymentPlan?.planType,
+      //   paymentMethod: paymentPlan?.paymentMethod,
+      //   hasSchedule: !!paymentPlan?.paymentSchedule,
+      //   scheduleLength: paymentPlan?.paymentSchedule?.length
+      // })
 
       const response = await invoiceService.createProformaInvoice(submissionData)
       if (response.success) {
