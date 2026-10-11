@@ -44,8 +44,8 @@ export const paymentService = {
   },
 
   // Delete Payment Plan
-  deletePaymentPlan: async (id) => {
-    const response = await api.delete(`/payments/${id}`)
+  deletePaymentPlan: async (id, force = false) => {
+    const response = await api.delete(`/payments/${id}${force ? '?force=true' : ''}`)
     return response.data
   },
 }

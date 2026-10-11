@@ -18,6 +18,7 @@ const PaymentListPage = () => {
   const [selectedPlanDetails, setSelectedPlanDetails] = useState(null)
   const [showViewModal, setShowViewModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [showForceDeleteModal, setShowForceDeleteModal] = useState(false)
   const [loadingDetails, setLoadingDetails] = useState(false)
 
   useEffect(() => {
@@ -61,6 +62,11 @@ const PaymentListPage = () => {
     setShowDeleteModal(true)
   }
 
+  const handleForceDelete = (plan) => {
+    setSelectedPlan(plan)
+    setShowForceDeleteModal(true)
+  }
+
   const confirmDelete = async () => {
     if (!selectedPlan) return
 
@@ -69,6 +75,25 @@ const PaymentListPage = () => {
       if (response.success) {
         toast.success('Payment plan deleted successfully')
         setShowDeleteModal(false)
+        setSelectedPlan(null)
+        fetchPaymentPlans()
+      } else {
+        toast.error(response.message || 'Failed to delete payment plan')
+      }
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to delete payment plan'
+      toast.error(errorMessage)
+    }
+  }
+
+  const confirmForceDelete = async () => {
+    if (!selectedPlan) return
+
+    try {
+      const response = await paymentService.deletePaymentPlan(selectedPlan._id, true)
+      if (response.success) {
+        toast.success('Payment plan deleted successfully')
+        setShowForceDeleteModal(false)
         setSelectedPlan(null)
         fetchPaymentPlans()
       } else {
@@ -202,9 +227,9 @@ const PaymentListPage = () => {
                           </button>
                         ) : (
                           <button
-                            disabled
-                            className="p-2 text-gray-400 cursor-not-allowed"
-                            title="Cannot delete payment plan with payments"
+                            onClick={() => handleForceDelete(plan)}
+                            className="p-2 text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
+                            title="Force Delete (has payments)"
                           >
                             <FiTrash2 size={18} />
                           </button>
@@ -368,6 +393,65 @@ const PaymentListPage = () => {
                   className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
                 >
                   Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Force Delete Confirmation Modal */}
+      {showForceDeleteModal && selectedPlan && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 border-2 border-orange-500">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-gray-900">⚠️ Force Delete Payment Plan</h2>
+              <button
+                onClick={() => {
+                  setShowForceDeleteModal(false)
+                  setSelectedPlan(null)
+                }}
+                className="p-2 hover:bg-gray-100 rounded-lg"
+              >
+                <FiX size={24} />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                <p className="text-orange-800 font-medium mb-2">Warning: This payment plan has payments recorded!</p>
+                <p className="text-sm text-orange-700">
+                  Invoice: <strong>{selectedPlan.invoiceNumber}</strong><br />
+                  Amount Paid: <strong>{formatCurrency(selectedPlan.totalPaid)}</strong><br />
+                  Remaining: <strong>{formatCurrency(selectedPlan.remainingAmount)}</strong>
+                </p>
+              </div>
+              <p className="text-gray-600">
+                Force deleting this payment plan will:
+              </p>
+              <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
+                <li>Delete all payment transactions</li>
+                <li>Delete all payment installments</li>
+                <li>Remove the payment plan from the invoice</li>
+                <li>This action cannot be undone</li>
+              </ul>
+              <p className="text-sm text-red-600 font-medium">
+                This is a destructive action. Only proceed if you are absolutely certain.
+              </p>
+              <div className="flex justify-end gap-3 pt-4">
+                <button
+                  onClick={() => {
+                    setShowForceDeleteModal(false)
+                    setSelectedPlan(null)
+                  }}
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmForceDelete}
+                  className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
+                >
+                  Force Delete
                 </button>
               </div>
             </div>
