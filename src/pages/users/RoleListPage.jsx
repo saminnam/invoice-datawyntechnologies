@@ -132,7 +132,7 @@ const RoleListPage = () => {
                 )}
               </div>
               <div className="flex gap-2">
-                {hasPermission('roles.edit') && !role.isSystem && (
+                {hasPermission('roles.edit') && (
                   <button
                     onClick={() => handleEditRole(role)}
                     className="p-2 hover:bg-gray-100 rounded-lg"
@@ -141,7 +141,7 @@ const RoleListPage = () => {
                     <FiEdit2 className="text-gray-600" size={18} />
                   </button>
                 )}
-                {hasPermission('roles.delete') && !role.isSystem && role.name !== 'Admin' && role.name !== 'Temporary Admin' && (
+                {hasPermission('roles.delete') && role.name !== 'Admin' && role.name !== 'Temporary Admin' && (
                   <button
                     onClick={() => handleDeleteRole(role._id, role.name)}
                     className="p-2 hover:bg-red-50 rounded-lg"
