@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { FiUsers, FiBox, FiFileText, FiTrendingUp, FiPlus } from 'react-icons/fi'
+import { FiUsers, FiBox, FiFileText, FiTrendingUp, FiPlus, FiCheckCircle } from 'react-icons/fi'
 import { useNavigate } from 'react-router-dom'
 import { dashboardService } from '../../services/dashboardService'
 import { formatCurrency } from '../../utils/formatCurrency'
@@ -13,6 +13,7 @@ const DashboardPage = () => {
   const [loading, setLoading] = useState(true)
   
   const canViewInvoiceValue = hasPermission('dashboard.view_invoice_value')
+  const canViewPaidValue = hasPermission('dashboard.view_paid_value')
 
   useEffect(() => {
     fetchStats()
@@ -49,7 +50,7 @@ const DashboardPage = () => {
       </div>
 
       {/* Stats Grid */}
-      <div className={`grid gap-6 ${canViewInvoiceValue ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4' : 'grid-cols-1 md:grid-cols-3'}`}>
+      <div className={`grid gap-6 ${canViewInvoiceValue && canViewPaidValue ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : canViewInvoiceValue || canViewPaidValue ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4' : 'grid-cols-1 md:grid-cols-3'}`}>
         <StatCard
           title="Total Customers"
           value={stats?.totalCustomers || 0}
@@ -74,6 +75,14 @@ const DashboardPage = () => {
             value={formatCurrency(stats?.totalInvoiceValue || 0)}
             icon={FiTrendingUp}
             color="orange"
+          />
+        )}
+        {canViewPaidValue && (
+          <StatCard
+            title="Total Invoice Paid Value"
+            value={formatCurrency(stats?.totalPaidAmount || 0)}
+            icon={FiCheckCircle}
+            color="teal"
           />
         )}
       </div>

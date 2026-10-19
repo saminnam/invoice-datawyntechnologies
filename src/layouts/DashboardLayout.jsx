@@ -124,7 +124,7 @@ const DashboardLayout = () => {
           </div>
         </div>
 
-        <nav className="p-4 space-y-2">
+        <nav className="p-4 space-y-2 max-h-[90vh] h-full dw-custom-scrollbar">
           {filteredMenuItems.map((item) => {
             const Icon = item.icon
             return (
