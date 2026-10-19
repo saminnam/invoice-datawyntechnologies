@@ -52,13 +52,13 @@ const RoleListPage = () => {
   }
 
   const handleDeleteRole = async (roleId, roleName) => {
-    // Prevent deleting the Admin role
-    if (roleName === 'Admin') {
-      toast.error('Cannot delete the Admin role')
+    // Prevent deleting system roles
+    if (roleName === 'Admin' || roleName === 'Temporary Admin') {
+      toast.error('Cannot delete system roles')
       return
     }
 
-    if (!window.confirm('Are you sure you want to delete this role?')) {
+    if (!window.confirm(`Are you sure you want to delete the role "${roleName}"? This action cannot be undone.`)) {
       return
     }
 
@@ -120,13 +120,7 @@ const RoleListPage = () => {
 
       {/* Roles Grid */}
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {roles
-          .filter(role => 
-            // Hide dummy/system roles (Staff, Viewer) - only show Admin and dynamically added roles
-            role.name !== 'Staff' && 
-            role.name !== 'Viewer'
-          )
-          .map((role) => (
+        {roles.map((role) => (
           <div key={role._id} className="card">
             <div className="flex justify-between items-start mb-4">
               <div>
@@ -147,7 +141,7 @@ const RoleListPage = () => {
                     <FiEdit2 className="text-gray-600" size={18} />
                   </button>
                 )}
-                {hasPermission('roles.delete') && !role.isSystem && role.name !== 'Admin' && (
+                {hasPermission('roles.delete') && !role.isSystem && role.name !== 'Admin' && role.name !== 'Temporary Admin' && (
                   <button
                     onClick={() => handleDeleteRole(role._id, role.name)}
                     className="p-2 hover:bg-red-50 rounded-lg"
@@ -158,9 +152,9 @@ const RoleListPage = () => {
                 )}
               </div>
             </div>
-            
+
             <p className="text-sm text-gray-600 mb-4">{role.description}</p>
-            
+
             <div className="border-t pt-4">
               <div className="text-sm text-gray-500 mb-2">
                 {role.permissions?.length || 0} permissions assigned
@@ -186,10 +180,7 @@ const RoleListPage = () => {
       </div>
 
       {/* Show message if no roles are displayed */}
-      {roles.filter(role => 
-        role.name !== 'Staff' && 
-        role.name !== 'Viewer'
-      ).length === 0 && (
+      {roles.length === 0 && (
         <div className="text-center py-12 text-gray-500">
           <p className="text-lg">No roles found</p>
           <p className="text-sm mt-2">Click "Add Role" to create your first role</p>

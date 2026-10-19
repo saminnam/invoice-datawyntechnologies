@@ -1,6 +1,3 @@
-// Frontend calculation utility for UI preview
-// Backend calculations remain authoritative
-
 export function calculateItem(item) {
   const { quantity = 0, rate = 0, discount = 0, discountType = 'fixed', gstRate = 0 } = item
   
