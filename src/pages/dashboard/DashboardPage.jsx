@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { FiUsers, FiBox, FiFileText, FiTrendingUp, FiPlus, FiCheckCircle } from 'react-icons/fi'
+import { FiUsers, FiBox, FiFileText, FiTrendingUp, FiPlus, FiCheckCircle, FiClock } from 'react-icons/fi'
 import { useNavigate } from 'react-router-dom'
 import { dashboardService } from '../../services/dashboardService'
 import { formatCurrency } from '../../utils/formatCurrency'
@@ -14,6 +14,7 @@ const DashboardPage = () => {
   
   const canViewInvoiceValue = hasPermission('dashboard.view_invoice_value')
   const canViewPaidValue = hasPermission('dashboard.view_paid_value')
+  const canViewPendingValue = hasPermission('dashboard.view_pending_value')
 
   useEffect(() => {
     fetchStats()
@@ -50,7 +51,7 @@ const DashboardPage = () => {
       </div>
 
       {/* Stats Grid */}
-      <div className={`grid gap-6 ${canViewInvoiceValue && canViewPaidValue ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : canViewInvoiceValue || canViewPaidValue ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4' : 'grid-cols-1 md:grid-cols-3'}`}>
+      <div className={`grid gap-6 ${canViewInvoiceValue && canViewPaidValue && canViewPendingValue ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-6' : (canViewInvoiceValue && canViewPaidValue) || (canViewInvoiceValue && canViewPendingValue) || (canViewPaidValue && canViewPendingValue) ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-5' : canViewInvoiceValue || canViewPaidValue || canViewPendingValue ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4' : 'grid-cols-1 md:grid-cols-3'}`}>
         <StatCard
           title="Total Customers"
           value={stats?.totalCustomers || 0}
@@ -83,6 +84,14 @@ const DashboardPage = () => {
             value={formatCurrency(stats?.totalPaidAmount || 0)}
             icon={FiCheckCircle}
             color="teal"
+          />
+        )}
+        {canViewPendingValue && (
+          <StatCard
+            title="Total Invoice Pending Value"
+            value={formatCurrency(stats?.totalPendingAmount || 0)}
+            icon={FiClock}
+            color="red"
           />
         )}
       </div>
