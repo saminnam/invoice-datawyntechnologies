@@ -51,7 +51,7 @@ const DashboardPage = () => {
       </div>
 
       {/* Stats Grid */}
-      <div className={`grid gap-6 ${canViewInvoiceValue && canViewPaidValue && canViewPendingValue ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-6' : (canViewInvoiceValue && canViewPaidValue) || (canViewInvoiceValue && canViewPendingValue) || (canViewPaidValue && canViewPendingValue) ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-5' : canViewInvoiceValue || canViewPaidValue || canViewPendingValue ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4' : 'grid-cols-1 md:grid-cols-3'}`}>
+      <div className={`grid gap-6 ${canViewInvoiceValue && canViewPaidValue && canViewPendingValue ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : (canViewInvoiceValue && canViewPaidValue) || (canViewInvoiceValue && canViewPendingValue) || (canViewPaidValue && canViewPendingValue) ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-5' : canViewInvoiceValue || canViewPaidValue || canViewPendingValue ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4' : 'grid-cols-1 md:grid-cols-3'}`}>
         <StatCard
           title="Total Customers"
           value={stats?.totalCustomers || 0}
